@@ -5,8 +5,8 @@
  *)
 
 
-open Owl_converter_types
-open Owl_converter_utils
+open Tfgraph_types
+open Tfgraph_utils
 
 
 let create () = Hashtbl.create 10

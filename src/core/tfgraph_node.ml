@@ -5,8 +5,8 @@
  *)
 
 
-open Owl_converter_types
-open Owl_converter_attr
+open Tfgraph_types
+open Tfgraph_attr
 
 
 type nodedef = {

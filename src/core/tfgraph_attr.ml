@@ -5,7 +5,7 @@
  *)
 
 
-open Owl_converter_types
+open TFgraph_types
 
 
 let make_tftensor ?tensor_content ?string_val ?float_val ?int_val dtype shape =

@@ -5,9 +5,9 @@
  *)
 
 
-open Owl_converter_types
-open Owl_converter_attr
-open Owl_converter_node
+open Tfgraph_types
+open Tfgraph_attr
+open Tfgraph_node
 
 
 (* Listed here only for setting some rules for naming; should not be exposed globally. *)
@@ -20,11 +20,8 @@ let restore_tensor_names = "save/RestoreV2/tensor_names"
 let restore_shape_slices= "save/RestoreV2/shape_and_slices"
 
 
-module Make
-  (G : Owl_computation_graph_sig.Sig)
-  = struct
 
-  module TFgraph = Owl_converter_graph.Make (G)
+  module TFgraph = Tfgraph_graph.Make (G)
 
 
   let create () =
@@ -188,5 +185,3 @@ module Make
       (Printf.sprintf "version: V2\n")
     in
     Printf.sprintf "saver_def {\n%s}\n" saver_str
-
-end

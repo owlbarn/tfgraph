@@ -5,9 +5,9 @@
  *)
 
 
-open Owl_converter_types
-open Owl_converter_attr
-open Owl_converter_node
+open Tfgraph_types
+open Tfgraph_attr
+open Tfgraph_node
 
 
 module Make
