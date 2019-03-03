@@ -5,7 +5,6 @@
  *)
 
 
-open Tfgraph_types
 open Owl_graph
 
 module TFcolls = Tfgraph_collection
@@ -18,13 +17,7 @@ module Make
 
   module TFgraph = Owl_converter_graph.Make (G)
 
-  type owl_tfgraph = {
-    mutable tfmeta  : tfmeta;
-    mutable tfgraph : TFgraph.tfgraph;
-    mutable tfsaver : tfsaver;
-    mutable tfcolls : tfcolls
-  }
-
+  open TFgraph (* for using the graphdef type *)
 
   let make_tf_cgraph () =
     {

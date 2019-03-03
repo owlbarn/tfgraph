@@ -6,12 +6,20 @@
 
 
 open Tfgraph_node
+open Tfgraph_types
 
 
 type tfgraph = {
   mutable nodes   : tfnode array;
   mutable version : string;
   mutable nametbl : (string, string) Hashtbl.t
+}
+
+type graphdef = {
+  mutable tfmeta  : tfmeta;
+  mutable tfgraph : tfgraph;
+  mutable tfsaver : tfsaver;
+  mutable tfcolls : tfcolls
 }
 
 (* Graph version is NOT tensorflow version;
@@ -47,3 +55,7 @@ let to_pbtxt graphdef =
   in
   let version_str = Printf.sprintf "versions {\nproducer: %s\n}\n" graphdef.version in
   Printf.sprintf "graph_def {\n%s%s}\n" node_str version_str
+
+
+(* To be used for connecting nodes in graph, with type/shape checking *)
+let connect _node1 _node2 = ()

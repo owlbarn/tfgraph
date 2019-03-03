@@ -41,15 +41,12 @@ let input  = [|
 let g = G.make_graph ~input ~output "graph_diff"
 
 (* with type checking *)
-(* assume they have *)
 let _ =
-  (* let pbtxt = T.(convert g |> to_pbtxt) in
-  Owl_io.write_file "tf_convert_diff.pbtxt" pbtxt *)
+  let tfgraph = T.convert g in
+  let inputs = [||] in
 
-  let machine = ip : port in
-  (* if service is on *)
-  let compute = Owl_deploy (computer) (device) (machine) in
+  let machine = "127.0.0.1" in
+  let device = CPU in
 
-  let result = run compute in (* cache  *)
-
-  print result
+  let result = execute_cgraph ~machine ~device tfgraph inputs in
+  result.(0)
