@@ -21,7 +21,7 @@ let restore_shape_slices= "save/RestoreV2/shape_and_slices"
 
 
 
-  module TFgraph = Tfgraph_graph.Make (G)
+module TFgraph = Tfgraph_graph_base
 
 
   let create () =

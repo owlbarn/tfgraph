@@ -1,5 +1,3 @@
-open Tfgraph_types
-open Tfgraph_attr
 open Tfgraph_node
 
 

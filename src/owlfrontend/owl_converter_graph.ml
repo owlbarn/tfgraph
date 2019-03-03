@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2019 Jianxin Zhao <jianxin.zhao@cl.cam.ac.uk>
  *)
 
+(*
 
 open Tfgraph_types
 open Tfgraph_attr
@@ -475,3 +476,5 @@ module Make
     Printf.sprintf "graph_def {\n%s%s}\n" node_str version_str
 
 end
+
+*)
