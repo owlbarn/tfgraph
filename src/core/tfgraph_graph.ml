@@ -1,3 +1,10 @@
+(*
+ * OWL - OCaml Scientific and Engineering Computing
+ * Copyright (c) 2016-2019 Liang Wang <liang.wang@cl.cam.ac.uk>
+ * Copyright (c) 2019-2019 Jianxin Zhao <jianxin.zhao@cl.cam.ac.uk>
+ *)
+
+
 open Tfgraph_node
 
 
@@ -6,7 +13,6 @@ type tfgraph = {
   mutable version : string;
   mutable nametbl : (string, string) Hashtbl.t
 }
-
 
 (* Graph version is NOT tensorflow version;
  * defined by TF_GRAPH_DEF_VERSION in core/public/version.h

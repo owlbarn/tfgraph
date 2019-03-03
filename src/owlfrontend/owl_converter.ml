@@ -4,22 +4,21 @@
  * Copyright (c) 2019-2019 Jianxin Zhao <jianxin.zhao@cl.cam.ac.uk>
  *)
 
-(*
-open Owl_converter_types
+
+open Tfgraph_types
 open Owl_graph
 
-module TFcolls = Owl_converter_collection
+module TFcolls = Tfgraph_collection
+module TFmeta  = Tfgraph_meta
+module TFsaver = Tfgraph_saver
 
 module Make
   (G : Owl_computation_graph_sig.Sig)
   = struct
 
-  module TFmeta  = Owl_converter_meta.Make (G)
   module TFgraph = Owl_converter_graph.Make (G)
-  module TFsaver = Owl_converter_saver.Make (G)
 
-
-  type tf_cgraph = {
+  type owl_tfgraph = {
     mutable tfmeta  : tfmeta;
     mutable tfgraph : TFgraph.tfgraph;
     mutable tfsaver : tfsaver;
@@ -58,14 +57,14 @@ module Make
     (* 2nd iteration : change tf_nodes's input nodes' names
      * according to tfgraph.nametbl *)
     Array.iter (fun tfnode ->
-      let inputs = Owl_converter_node.get_inputs tfnode in
+      let inputs = Tfgraph_node.get_inputs tfnode in
       Array.iteri (fun i x ->
         try (
           let replace = Hashtbl.find tfgraph.nametbl x in
           inputs.(i) <- replace
         ) with Not_found -> ()
       ) inputs;
-      Owl_converter_node.set_inputs tfnode inputs
+      Tfgraph_node.set_inputs tfnode inputs
     ) tfgraph.nodes;
 
     (* 3nd iteration : add meta/saver/collection operations based on tf_cgraph *)
@@ -81,17 +80,17 @@ module Make
 
     let variable_counter = ref 0 in
     Array.iter (fun tfnode ->
-      let opname = Owl_converter_node.get_op_name tfnode in
+      let opname = Tfgraph_node.get_op_name tfnode in
       if not (TFmeta.mem_opdef tfmeta opname) then (
-        let tfop = Owl_converter_node.get_opdef tfnode in
+        let tfop = Tfgraph_node.get_opdef tfnode in
         TFmeta.add_opdef tfmeta tfop
       );
       if (TFmeta.is_var tfnode) then (
         variable_counter := !variable_counter + 1;
         TFsaver.add_link tfsaver tfgraph tfnode;
         (* TODO: serialise variables *)
-        (* TFcolls.update tfcolls "var" (Owl_converter_node.get_name tfnode);
-        TFcolls.update tfcolls "var_train" (Owl_converter_node.get_name tfnode) *)
+        (* TFcolls.update tfcolls "var" (Tfgraph_node.get_name tfnode);
+        TFcolls.update tfcolls "var_train" (Tfgraph_node.get_name tfnode) *)
       )
     ) tfgraph.nodes;
 
@@ -134,8 +133,4 @@ module Make
     (TFsaver.to_pbtxt g.tfsaver) ^
     (TFcolls.to_pbtxt g.tfcolls)
 
-
-  let _to_pb = ()
-
 end
-*)

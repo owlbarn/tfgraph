@@ -7,7 +7,4 @@ include Tfgraph_types
 
 (** Make alias of the modules in Owl for your convenience. *)
 
-module GraphDef   = Tfgraph_graph_base
-module Meta       = Tfgraph_meta
-module Saver      = Tfgraph_saver
-module Collection = Tfgraph_collection
+module OwlFront   = Owl_converter

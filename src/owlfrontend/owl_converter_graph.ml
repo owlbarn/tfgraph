@@ -4,12 +4,9 @@
  * Copyright (c) 2019-2019 Jianxin Zhao <jianxin.zhao@cl.cam.ac.uk>
  *)
 
-(*
-
 open Tfgraph_types
-open Tfgraph_attr
 open Tfgraph_node
-
+open Tfgraph_attr
 
 module Make
   (G : Owl_computation_graph_sig.Sig)
@@ -19,12 +16,7 @@ module Make
 
   module Device = G.Optimiser.Operator.Symbol.Shape.Type.Device
 
-  type tfgraph = {
-    mutable nodes   : tfnode array;
-    mutable version : string;
-    mutable nametbl : (string, string) Hashtbl.t
-  }
-
+  include Tfgraph_graph
 
   (* Graph version is NOT tensorflow version;
    * defined by TF_GRAPH_DEF_VERSION in core/public/version.h
@@ -74,7 +66,7 @@ module Make
 
   let _make_uniform_initialiser name shp =
     let shp_str = Owl_utils_array.to_string ~sep:"," string_of_int shp in
-    let tensor_content = Owl_converter_utils.serialise_tensor_content
+    let tensor_content = Tfgraph_utils.serialise_tensor_content
       "int32" shp_str
     in
     let tvalue = make_tftensor ~tensor_content "DT_INT32" [|Array.length shp|] in
@@ -157,7 +149,7 @@ module Make
       TFConst (TFConst.create ~dtype:"DT_INT32" aname [||] atensor)
     ) else (
       let axes_str = Owl_utils_array.to_string ~sep:"," string_of_int axes in
-      let tensor_content = Owl_converter_utils.serialise_tensor_content
+      let tensor_content = Tfgraph_utils.serialise_tensor_content
         "int32" axes_str in
       let atensor = ATTR_Tensor (make_tftensor ~tensor_content
         "DT_INT32" [|Array.length axes|]) in
@@ -205,7 +197,7 @@ module Make
 
 
   let _make_stack_for_stridedslice name arr =
-    let tensor_content = Owl_converter_utils.serialise_tensor_content "int32"
+    let tensor_content = Tfgraph_utils.serialise_tensor_content "int32"
       (Owl_utils_array.to_string ~sep:"," string_of_int arr)
     in
     let shp = [| Array.length arr |] in
@@ -230,7 +222,7 @@ module Make
 
   let make_reshape_nodes name inputs shp =
     let shp_str = Owl_utils_array.to_string ~sep:"," string_of_int shp in
-    let tensor_content = Owl_converter_utils.serialise_tensor_content
+    let tensor_content = Tfgraph_utils.serialise_tensor_content
       "int32" shp_str
     in
     let stensor = ATTR_Tensor (make_tftensor ~tensor_content
@@ -456,7 +448,7 @@ module Make
       make_stridedslice_nodes name inputs out_shp b e s shinrk_mask
     | GetSlice i          -> (* be carefull when index contains less item than the full length *)
       let input_shp = _get_input_shape node in
-      let b, e, s = Owl_converter_utils.get_slice_param i input_shp in
+      let b, e, s = Tfgraph_utils.get_slice_param i input_shp in
       make_stridedslice_nodes name inputs out_shp b e s 0
     | _                   -> let err = Printf.sprintf "unsupported operation: %s" (Symbol.op_to_str attr.op) in failwith err
 
@@ -466,15 +458,4 @@ module Make
     let tfnodes, name_update = make_tfnodes tfgraph owlnode in
     add_tfnodes tfgraph tfnodes name_update
 
-
-  let to_pbtxt graphdef =
-    let node_str = Owl_utils_array.to_string ~sep:"\n" (fun n ->
-      to_pbtxt n
-    ) graphdef.nodes
-    in
-    let version_str = Printf.sprintf "versions {\nproducer: %s\n}\n" graphdef.version in
-    Printf.sprintf "graph_def {\n%s%s}\n" node_str version_str
-
 end
-
-*)

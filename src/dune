@@ -1,4 +1,5 @@
 (copy_files# core/*)
+(copy_files# owlfrontend/*)
 
 (library
   (name owl_tensorflow)
