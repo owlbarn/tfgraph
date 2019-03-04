@@ -40,10 +40,9 @@ let input  = [|
 
 let g = G.make_graph ~input ~output "graph_diff"
 
-(* with type checking *)
 let _ =
   let tfgraph = T.convert g in
-  let inputs = [||] in
+  let inputs = [| N.ones [|100|] |] in
 
   let machine = "127.0.0.1" in
   let device = CPU in

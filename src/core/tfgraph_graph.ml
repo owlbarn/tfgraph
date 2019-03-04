@@ -15,12 +15,14 @@ type tfgraph = {
   mutable nametbl : (string, string) Hashtbl.t
 }
 
+
 type graphdef = {
   mutable tfmeta  : tfmeta;
   mutable tfgraph : tfgraph;
   mutable tfsaver : tfsaver;
   mutable tfcolls : tfcolls
 }
+
 
 (* Graph version is NOT tensorflow version;
  * defined by TF_GRAPH_DEF_VERSION in core/public/version.h

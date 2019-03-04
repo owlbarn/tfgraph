@@ -5,12 +5,10 @@
  *)
 
 
-type graph_device = CPU | GPU | TPU
-
-let execute_cgraph ?(_device : graph_device) _graphdef _inputs = ()
+let execute_cgraph ?(_machine : string) ?(_device : graph_device) _graphdef _inputs = ()
   (*
-   * 0. modify the graph according to device using "set_device"; to be explored
-   * 1. serialise graphdef   (tfgraph.proto)
+   * 0. modify all the nodes' device property (to CPU, GPU, or TPU) according to "device" using "set_device"; to be explored
+   * 1. serialise graphdef   (NOT tfgraph.proto; maybe just use string/bytes§)
    * 2. serialise all inputs (data.proto)
    * 3. send graph and input to backend service as bytes (how)
    * 4. get data result, deserialise (data.proto)

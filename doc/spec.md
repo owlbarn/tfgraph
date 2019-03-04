@@ -1,4 +1,4 @@
-## The naming scheme
+## The naming rules
 
 - The one or more output nodes' names are all put in the node collection that is named "result".
 

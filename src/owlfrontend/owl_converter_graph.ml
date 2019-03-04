@@ -12,11 +12,12 @@ module Make
   (G : Owl_computation_graph_sig.Sig)
   = struct
 
+  include Tfgraph_graph
+
   open G.Optimiser.Operator
 
   module Device = G.Optimiser.Operator.Symbol.Shape.Type.Device
 
-  include Tfgraph_graph
 
   (* Graph version is NOT tensorflow version;
    * defined by TF_GRAPH_DEF_VERSION in core/public/version.h

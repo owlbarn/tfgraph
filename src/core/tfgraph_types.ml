@@ -5,6 +5,9 @@
  *)
 
 
+type graph_device = CPU | GPU | TPU
+
+
 type dtype =
   DT_HALF | DT_FLOAT | DT_DOUBLE | DT_UINT8 |
   DT_INT8 | DT_INT16 | DT_INT32  | DT_INT64 |
