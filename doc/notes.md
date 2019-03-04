@@ -1,7 +1,7 @@
 # Plan
 
 Here is what I'm going to do considering the workflow (stated below):
-- do NOT bother with the backend service for now;
+- **do NOT bother with the backend service for now**;
 - instead, first check how to set device to CPU and GPU;
 - second, think about what kind of information I can get from Tensorflow's side. For example, can I get XLA IR back?
 - also think about the type/shape checking in constructing a tfgraph.
@@ -14,7 +14,8 @@ Here is the workflow I'm thinking about:
 ```ocaml
 let tfgraph = T.convert g
 
-(* here we can save the tfgraph as pbtxt; or we can also do this... *)
+(* here we can save the tfgraph as pbtxt as before;
+ * or we can also do this... *)
 let inputs = [| Arr.ones [|100|] |]
 let machine = "127.0.0.1"
 let device = CPU
