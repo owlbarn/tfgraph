@@ -295,6 +295,18 @@ module Make
     )
 
 
+  let make_transpose_nodes name inputs out_shp perm =
+    let pname = name ^ "/perm" in
+    let perm_str = Owl_utils_array.to_string ~sep:"," string_of_int perm in
+    let tensor_content = Tfgraph_utils.serialise_tensor_content "int32" perm_str in
+    let pvalue = make_tftensor ~tensor_content "DT_INT32" [|Array.length perm|] in
+    let pnode = TFConst (TFConst.create ~dtype:"DT_INT32" pname [|Array.length perm|] (ATTR_Tensor pvalue)) in
+
+    let tname = name ^ "/transpose" in
+    let tnode = TFTranspose (TFTranspose.create tname [|inputs.(0); pname|] out_shp) in
+    [|tnode; pnode|], ("", "")
+
+
   (* The logic of how one owl node turned into multiple tfnodes is implemented
    * here.
    * Currently return node array and "name_update" : string * string; meaning,
@@ -384,6 +396,7 @@ module Make
     | PowScalar           -> [| TFPow (TFPow.create name inputs out_shp) |], ("", "")
     | Relu                -> [| TFRelu (TFRelu.create name inputs out_shp) |], ("", "")
     | Scalar_Relu         -> [| TFRelu (TFRelu.create name inputs out_shp) |], ("", "")
+    | Transpose perm      -> make_transpose_nodes name inputs out_shp perm
     | L2NormSqr'          ->
       let input_shp = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shp - 1) in

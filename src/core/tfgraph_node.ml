@@ -3903,11 +3903,253 @@ module TFRandomUniform = struct
   let make_nodedef n =
     let node_attr = [|
       ("T", (ATTR_Type "DT_INT32"));
-      ("_class", (ATTR_List [| ATTR_String "loc@" |])); (* tmp *)
       ("_output_shapes", (ATTR_List [|(ATTR_Shape n.out_shp)|]));
       ("dtype", ATTR_Type n.dtype);
       ("seed", ATTR_Int n.seed1);
       ("seed2", ATTR_Int n.seed2);
+    |] in
+    let cls_attr = Array.map (fun c -> ATTR_String ("loc:@" ^ c)) n.cls in
+    let node_attr = if (cls_attr = [||]) then node_attr else
+      (Array.append node_attr [| ("_class", ATTR_List cls_attr) |])
+    in
+    {
+      name      = n.name;
+      op_name   = opname;
+      input     = n.inputs;
+      node_attr = node_attr;
+      device    = n.device
+    }
+
+
+  let to_pbtxt n =
+    make_nodedef n |> nodedef_to_pbtxt
+
+
+  let get_name n = n.name
+
+
+  let get_output_shape n = n.out_shp
+
+
+  let get_inputs n = n.inputs
+
+
+  let set_inputs n i = n.inputs <- i
+
+
+  let get_device n = n.device
+
+
+  let set_device n d = n.device <- d
+
+end
+
+
+module TFRange = struct
+
+  type t = {
+    mutable name    : string;
+    mutable op_name : string;
+    mutable inputs  : string array;
+    mutable out_shp : int array;
+    mutable device  : string;
+    mutable cls     : string array;
+    mutable tidx    : string; (* type *)
+  }
+
+
+  let opname = "Range"
+
+
+  let opdef =
+    let input_arg  = [|
+      make_argdef ~typ_attr:"Tidx" "start";
+      make_argdef ~typ_attr:"Tidx" "limit";
+      make_argdef ~typ_attr:"Tidx" "delta";
+    |] in
+    let output_arg = [| make_argdef ~typ_attr:"Tidx" "output" |] in
+    let attr = [| make_tfop_attr "Tidx" "type" |] in
+    make_opdef ~input_arg ~output_arg ~attr opname
+
+
+  let create ?(cls=[||]) ?(tidx="DT_INT32") ?(device="") name inputs out_shp =
+    {
+      name     = name;
+      op_name  = opname;
+      inputs   = inputs;
+      out_shp  = out_shp;
+      device   = device;
+      cls      = cls;
+      tidx     = tidx;
+    }
+
+
+  let make_nodedef n =
+    let node_attr = [|
+      ("Tidx", (ATTR_Type n.tidx));
+      ("_output_shapes", (ATTR_List [|(ATTR_Shape n.out_shp)|]));
+    |] in
+    let cls_attr = Array.map (fun c -> ATTR_String ("loc:@" ^ c)) n.cls in
+    let node_attr = if (cls_attr = [||]) then node_attr else
+      (Array.append node_attr [| ("_class", ATTR_List cls_attr) |])
+    in
+    {
+      name      = n.name;
+      op_name   = opname;
+      input     = n.inputs;
+      node_attr = node_attr;
+      device    = n.device
+    }
+
+
+  let to_pbtxt n =
+    make_nodedef n |> nodedef_to_pbtxt
+
+
+  let get_name n = n.name
+
+
+  let get_output_shape n = n.out_shp
+
+
+  let get_inputs n = n.inputs
+
+
+  let set_inputs n i = n.inputs <- i
+
+
+  let get_device n = n.device
+
+
+  let set_device n d = n.device <- d
+
+end
+
+
+module TFRank = struct
+
+  type t = {
+    mutable name    : string;
+    mutable op_name : string;
+    mutable inputs  : string array;
+    mutable out_shp : int array;
+    mutable dtype   : string;
+    mutable device  : string;
+    mutable cls     : string array;
+  }
+
+
+  let opname = "Rank"
+
+
+  let opdef =
+    let input_arg  = [| make_argdef ~typ_attr:"T" "input" |] in
+    let output_arg = [| make_argdef ~typ:"DT_INT32" "output" |] in
+    let attr = [| make_tfop_attr "T" "type" |] in
+    make_opdef ~input_arg ~output_arg ~attr opname
+
+
+  let create ?(cls=[||]) ?(dtype="DT_FLOAT") ?(device="") name inputs out_shp =
+    {
+      name    = name;
+      op_name = opname;
+      inputs  = inputs;
+      out_shp = out_shp;
+      dtype   = dtype;
+      device  = device;
+      cls     = cls;
+    }
+
+
+  let make_nodedef n =
+    let node_attr = [|
+      ("T", (ATTR_Type n.dtype));
+      ("_output_shapes", (ATTR_List [|(ATTR_Shape n.out_shp)|]));
+    |] in
+    let cls_attr = Array.map (fun c -> ATTR_String ("loc:@" ^ c)) n.cls in
+    let node_attr = if (cls_attr = [||]) then node_attr else
+      (Array.append node_attr [| ("_class", ATTR_List cls_attr) |])
+    in
+    {
+      name      = n.name;
+      op_name   = opname;
+      input     = n.inputs;
+      node_attr = node_attr;
+      device    = n.device
+    }
+
+
+  let to_pbtxt n =
+    make_nodedef n |> nodedef_to_pbtxt
+
+
+  let get_name n = n.name
+
+
+  let get_output_shape n = n.out_shp
+
+
+  let get_inputs n = n.inputs
+
+
+  let set_inputs n i = n.inputs <- i
+
+
+  let get_device n = n.device
+
+
+  let set_device n d = n.device <- d
+
+end
+
+
+module TFTranspose = struct
+
+  type t = {
+    mutable name    : string;
+    mutable op_name : string;
+    mutable inputs  : string array;
+    mutable out_shp : int array;
+    mutable dtype   : string;
+    mutable device  : string;
+    mutable cls     : string array;
+  }
+
+
+  let opname = "Transpose"
+
+
+  let opdef =
+    let input_arg  = [|
+      make_argdef ~typ_attr:"T" "x";
+      make_argdef ~typ_attr:"Tperm" "perm"
+    |] in
+    let output_arg = [| make_argdef ~typ_attr:"T" "y" |] in
+    let attr = [|
+      make_tfop_attr "T" "type";
+      make_tfop_attr "Tperm" "type";
+    |]
+    in
+    make_opdef ~input_arg ~output_arg ~attr opname
+
+
+  let create ?(cls=[||]) ?(dtype="DT_FLOAT") ?(device="") name inputs out_shp =
+    {
+      name    = name;
+      op_name = opname;
+      inputs  = inputs;
+      out_shp = out_shp;
+      dtype   = dtype;
+      device  = device;
+      cls     = cls;
+    }
+
+
+  let make_nodedef n =
+    let node_attr = [|
+      ("T", (ATTR_Type n.dtype));
+      ("Tperm", (ATTR_Type "DT_INT32"));
+      ("_output_shapes", (ATTR_List [|(ATTR_Shape n.out_shp)|]));
     |] in
     let cls_attr = Array.map (fun c -> ATTR_String ("loc:@" ^ c)) n.cls in
     let node_attr = if (cls_attr = [||]) then node_attr else
@@ -3992,6 +4234,9 @@ type tfnode =
   | TFStridedSlice  of TFStridedSlice.t
   | TFReshape       of TFReshape.t
   | TFRandomUniform of TFRandomUniform.t
+  | TFRange         of TFRange.t
+  | TFRank          of TFRank.t
+  | TFTranspose     of TFTranspose.t
   | TFNoop          of TFNoop.t
 
 
@@ -4041,6 +4286,9 @@ let to_pbtxt = function
   | TFStridedSlice  n -> TFStridedSlice.to_pbtxt n
   | TFReshape       n -> TFReshape.to_pbtxt n
   | TFRandomUniform n -> TFRandomUniform.to_pbtxt n
+  | TFRange         n -> TFRange.to_pbtxt n
+  | TFRank          n -> TFRank.to_pbtxt n
+  | TFTranspose     n -> TFTranspose.to_pbtxt n
   | TFNoop          n -> TFNoop.to_pbtxt n
 
 
@@ -4090,6 +4338,9 @@ let get_name = function
   | TFStridedSlice  n -> TFStridedSlice.get_name n
   | TFReshape       n -> TFReshape.get_name n
   | TFRandomUniform n -> TFRandomUniform.get_name n
+  | TFRange         n -> TFRange.get_name n
+  | TFRank          n -> TFRank.get_name n
+  | TFTranspose     n -> TFTranspose.get_name n
   | TFNoop          n -> TFNoop.get_name n
 
 
@@ -4139,6 +4390,9 @@ let get_op_name = function
   | TFStridedSlice  _ -> TFStridedSlice.opname
   | TFReshape       _ -> TFReshape.opname
   | TFRandomUniform _ -> TFRandomUniform.opname
+  | TFTranspose     _ -> TFTranspose.opname
+  | TFRange         _ -> TFRange.opname
+  | TFRank          _ -> TFRank.opname
   | TFNoop          _ -> TFNoop.opname
 
 
@@ -4188,6 +4442,9 @@ let get_opdef = function
   | TFStridedSlice  _ -> TFStridedSlice.opdef
   | TFReshape       _ -> TFReshape.opdef
   | TFRandomUniform _ -> TFRandomUniform.opdef
+  | TFRange         _ -> TFRange.opdef
+  | TFRank          _ -> TFRank.opdef
+  | TFTranspose     _ -> TFTranspose.opdef
   | TFNoop          _ -> TFNoop.opdef
 
 
@@ -4237,6 +4494,9 @@ let get_output_shape = function
   | TFStridedSlice  n -> TFStridedSlice.get_output_shape n
   | TFReshape       n -> TFReshape.get_output_shape n
   | TFRandomUniform n -> TFRandomUniform.get_output_shape n
+  | TFRange         n -> TFRange.get_output_shape n
+  | TFRank          n -> TFRank.get_output_shape n
+  | TFTranspose     n -> TFTranspose.get_output_shape n
   | TFNoop          n -> TFNoop.get_output_shape n
 
 
@@ -4291,6 +4551,9 @@ let get_inputs = function
   | TFStridedSlice  n -> TFStridedSlice.get_inputs n
   | TFReshape       n -> TFReshape.get_inputs n
   | TFRandomUniform n -> TFRandomUniform.get_inputs n
+  | TFRange         n -> TFRange.get_inputs n
+  | TFRank          n -> TFRank.get_inputs n
+  | TFTranspose     n -> TFTranspose.get_inputs n
   | _                 -> [||]
 
 
@@ -4340,6 +4603,9 @@ let set_inputs = function
   | TFStridedSlice  n -> TFStridedSlice.set_inputs n
   | TFReshape       n -> TFReshape.set_inputs n
   | TFRandomUniform n -> TFRandomUniform.set_inputs n
+  | TFRange         n -> TFRange.set_inputs n
+  | TFRank          n -> TFRank.set_inputs n
+  | TFTranspose     n -> TFTranspose.set_inputs n
   | _                 -> fun _ -> ()
 
 
@@ -4389,6 +4655,9 @@ let get_device = function
   | TFStridedSlice  n -> TFStridedSlice.get_device n
   | TFReshape       n -> TFReshape.get_device n
   | TFRandomUniform n -> TFRandomUniform.get_device n
+  | TFRange         n -> TFRange.get_device n
+  | TFRank          n -> TFRank.get_device n
+  | TFTranspose     n -> TFTranspose.get_device n
   | TFNoop          n -> TFNoop.get_device n
 
 
@@ -4438,6 +4707,9 @@ let set_device = function
   | TFStridedSlice  n -> TFStridedSlice.set_device  n
   | TFReshape       n -> TFReshape.set_device n
   | TFRandomUniform n -> TFRandomUniform.set_device n
+  | TFRange         n -> TFRange.set_device n
+  | TFRank          n -> TFRank.set_device n
+  | TFTranspose     n -> TFTranspose.set_device n
   | TFNoop          n -> TFNoop.set_device n
 
 
