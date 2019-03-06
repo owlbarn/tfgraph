@@ -4188,6 +4188,88 @@ module TFTranspose = struct
 end
 
 
+module TFMatrixInverse = struct
+
+  type t = {
+    mutable name    : string;
+    mutable op_name : string;
+    mutable inputs  : string array;
+    mutable out_shp : int array;
+    mutable dtype   : string;
+    mutable device  : string;
+    mutable cls     : string array;
+    mutable adjoint : bool;
+  }
+
+
+  let opname = "MatrixInverse"
+
+
+  let opdef =
+    let input_arg  = [| make_argdef ~typ_attr:"T" "input" |] in
+    let output_arg = [| make_argdef ~typ_attr:"T" "output" |] in
+    let attr = [|
+      make_tfop_attr "T" "type";
+      make_tfop_attr "adjoint" "bool"
+    |] in
+    make_opdef ~input_arg ~output_arg ~attr opname
+
+
+  let create ?(cls=[||]) ?(device="") ?(adjoint=false) name inputs out_shp =
+    {
+      name    = name;
+      op_name = opname;
+      inputs  = inputs;
+      out_shp = out_shp;
+      dtype   = "DT_FLOAT";
+      device  = device;
+      cls     = cls;
+      adjoint = adjoint;
+    }
+
+
+  let make_nodedef n =
+    let node_attr = [|
+      ("T", (ATTR_Type n.dtype));
+      ("_output_shapes", (ATTR_List [|(ATTR_Shape n.out_shp)|]))
+    |] in
+    let cls_attr = Array.map (fun c -> ATTR_String ("loc:@" ^ c)) n.cls in
+    let node_attr = if (cls_attr = [||]) then node_attr else
+      (Array.append node_attr [| ("_class", ATTR_List cls_attr) |])
+    in
+    {
+      name      = n.name;
+      op_name   = opname;
+      input     = n.inputs;
+      node_attr = node_attr;
+      device    = n.device
+    }
+
+
+  let to_pbtxt n =
+    make_nodedef n |> nodedef_to_pbtxt
+
+
+  let get_name n = n.name
+
+
+  let get_output_shape n = n.out_shp
+
+
+  let get_inputs n = n.inputs
+
+
+  let set_inputs n i = n.inputs <- i
+
+
+  let get_device n = n.device
+
+
+  let set_device n d = n.device <- d
+
+end
+
+
 type tfnode =
   | TFAbs           of TFAbs.t
   | TFNeg           of TFNeg.t
@@ -4237,6 +4319,7 @@ type tfnode =
   | TFRange         of TFRange.t
   | TFRank          of TFRank.t
   | TFTranspose     of TFTranspose.t
+  | TFMatrixInverse of TFMatrixInverse.t
   | TFNoop          of TFNoop.t
 
 
@@ -4289,6 +4372,7 @@ let to_pbtxt = function
   | TFRange         n -> TFRange.to_pbtxt n
   | TFRank          n -> TFRank.to_pbtxt n
   | TFTranspose     n -> TFTranspose.to_pbtxt n
+  | TFMatrixInverse n -> TFMatrixInverse.to_pbtxt n
   | TFNoop          n -> TFNoop.to_pbtxt n
 
 
@@ -4341,6 +4425,7 @@ let get_name = function
   | TFRange         n -> TFRange.get_name n
   | TFRank          n -> TFRank.get_name n
   | TFTranspose     n -> TFTranspose.get_name n
+  | TFMatrixInverse n -> TFMatrixInverse.get_name n
   | TFNoop          n -> TFNoop.get_name n
 
 
@@ -4390,9 +4475,10 @@ let get_op_name = function
   | TFStridedSlice  _ -> TFStridedSlice.opname
   | TFReshape       _ -> TFReshape.opname
   | TFRandomUniform _ -> TFRandomUniform.opname
-  | TFTranspose     _ -> TFTranspose.opname
   | TFRange         _ -> TFRange.opname
   | TFRank          _ -> TFRank.opname
+  | TFTranspose     _ -> TFTranspose.opname
+  | TFMatrixInverse _ -> TFMatrixInverse.opname
   | TFNoop          _ -> TFNoop.opname
 
 
@@ -4445,6 +4531,7 @@ let get_opdef = function
   | TFRange         _ -> TFRange.opdef
   | TFRank          _ -> TFRank.opdef
   | TFTranspose     _ -> TFTranspose.opdef
+  | TFMatrixInverse _ -> TFMatrixInverse.opdef
   | TFNoop          _ -> TFNoop.opdef
 
 
@@ -4497,6 +4584,7 @@ let get_output_shape = function
   | TFRange         n -> TFRange.get_output_shape n
   | TFRank          n -> TFRank.get_output_shape n
   | TFTranspose     n -> TFTranspose.get_output_shape n
+  | TFMatrixInverse n -> TFMatrixInverse.get_output_shape n
   | TFNoop          n -> TFNoop.get_output_shape n
 
 
@@ -4554,6 +4642,7 @@ let get_inputs = function
   | TFRange         n -> TFRange.get_inputs n
   | TFRank          n -> TFRank.get_inputs n
   | TFTranspose     n -> TFTranspose.get_inputs n
+  | TFMatrixInverse n -> TFMatrixInverse.get_inputs n
   | _                 -> [||]
 
 
@@ -4606,6 +4695,7 @@ let set_inputs = function
   | TFRange         n -> TFRange.set_inputs n
   | TFRank          n -> TFRank.set_inputs n
   | TFTranspose     n -> TFTranspose.set_inputs n
+  | TFMatrixInverse n -> TFMatrixInverse.set_inputs n
   | _                 -> fun _ -> ()
 
 
@@ -4658,6 +4748,7 @@ let get_device = function
   | TFRange         n -> TFRange.get_device n
   | TFRank          n -> TFRank.get_device n
   | TFTranspose     n -> TFTranspose.get_device n
+  | TFMatrixInverse n -> TFMatrixInverse.get_device n
   | TFNoop          n -> TFNoop.get_device n
 
 
@@ -4710,6 +4801,7 @@ let set_device = function
   | TFRange         n -> TFRange.set_device n
   | TFRank          n -> TFRank.set_device n
   | TFTranspose     n -> TFTranspose.set_device n
+  | TFMatrixInverse n -> TFMatrixInverse.set_device n
   | TFNoop          n -> TFNoop.set_device n
 
 

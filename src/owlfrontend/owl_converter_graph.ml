@@ -397,6 +397,7 @@ module Make
     | Relu                -> [| TFRelu (TFRelu.create name inputs out_shp) |], ("", "")
     | Scalar_Relu         -> [| TFRelu (TFRelu.create name inputs out_shp) |], ("", "")
     | Transpose perm      -> make_transpose_nodes name inputs out_shp perm
+    | Inv                 -> [| TFMatrixInverse (TFMatrixInverse.create name inputs out_shp) |], ("", "")
     | L2NormSqr'          ->
       let input_shp = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shp - 1) in
