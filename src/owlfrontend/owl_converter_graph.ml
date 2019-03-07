@@ -307,6 +307,26 @@ module Make
     [|tnode; pnode|], ("", "")
 
 
+  let make_trace_nodes name inputs out_shp input_shp =
+    let dname = name ^ "/matrixDiagPart" in
+    let l = Array.length input_shp in
+    assert(l >= 2);
+    let last_dim = Pervasives.min input_shp.(l-1) input_shp.(l-2) in
+    let dshp = Array.copy input_shp in
+    dshp.(l-2) <- last_dim;
+    let dshp = Array.sub dshp 0 (l - 1) in
+    let dnode = TFMatrixDiagPart (TFMatrixDiagPart.create dname inputs dshp) in
+
+    let rname = name ^ "/reduction_indices" in
+    let rval = ATTR_Tensor (make_tftensor ~int_val:[|-1|] "DT_INT32" [|1|]) in
+    let rnode = TFConst (TFConst.create ~dtype:"DT_INT32" rname [|1|] rval) in
+
+    let sname = name ^ "/trace" in
+    let snode = TFSum (TFSum.create ~keepdims:false sname [|dname; rname|] out_shp) in
+
+    [|snode; rnode; dnode|], (name, sname)
+
+
   (* The logic of how one owl node turned into multiple tfnodes is implemented
    * here.
    * Currently return node array and "name_update" : string * string; meaning,
@@ -398,6 +418,9 @@ module Make
     | Scalar_Relu         -> [| TFRelu (TFRelu.create name inputs out_shp) |], ("", "")
     | Transpose perm      -> make_transpose_nodes name inputs out_shp perm
     | Inv                 -> [| TFMatrixInverse (TFMatrixInverse.create name inputs out_shp) |], ("", "")
+    | Trace               ->
+      let input_shp = _get_input_shape node in
+      make_trace_nodes name inputs out_shp input_shp
     | L2NormSqr'          ->
       let input_shp = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shp - 1) in
