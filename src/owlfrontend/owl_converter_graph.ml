@@ -251,10 +251,9 @@ module Make
     let sqrname = name ^ "/square" in
     let sqrnode = TFSquare (TFSquare.create sqrname inputs inp_shp) in
 
-    let sumname = name ^ "/sum" in
-    let sumnodes, _ = make_sum_nodes sumname [|sqrname|] out_shp axes keepdims in
+    let sumnodes, _ = make_sum_nodes name [|sqrname|] out_shp axes keepdims in
     (* TODO: this does not look like a good systen design -- I acutally need to know how make_sum_nodes works *)
-    (Array.append sumnodes [|sqrnode|]), (name, sumname)
+    (Array.append sumnodes [|sqrnode|]), ("", "")
 
 
   let make_l2norm_nodes name inputs inp_shp out_shp axes keepdims =
@@ -302,8 +301,7 @@ module Make
     let pvalue = make_tftensor ~tensor_content "DT_INT32" [|Array.length perm|] in
     let pnode = TFConst (TFConst.create ~dtype:"DT_INT32" pname [|Array.length perm|] (ATTR_Tensor pvalue)) in
 
-    let tname = name ^ "/transpose" in
-    let tnode = TFTranspose (TFTranspose.create tname [|inputs.(0); pname|] out_shp) in
+    let tnode = TFTranspose (TFTranspose.create name [|inputs.(0); pname|] out_shp) in
     [|tnode; pnode|], ("", "")
 
 
@@ -321,10 +319,20 @@ module Make
     let rval = ATTR_Tensor (make_tftensor ~int_val:[|-1|] "DT_INT32" [|1|]) in
     let rnode = TFConst (TFConst.create ~dtype:"DT_INT32" rname [|1|] rval) in
 
-    let sname = name ^ "/trace" in
-    let snode = TFSum (TFSum.create ~keepdims:false sname [|dname; rname|] out_shp) in
+    let snode = TFSum (TFSum.create ~keepdims:false name [|dname; rname|] out_shp) in
 
-    [|snode; rnode; dnode|], (name, sname)
+    [|snode; rnode; dnode|], ("", "")
+
+
+  let make_concat_nodes name inputs out_shp axis =
+    let aname = name ^ "/axis" in
+    let aval  = ATTR_Tensor (make_tftensor ~int_val:[|axis|] "DT_INT32" [||]) in
+    let anode = TFConst (TFConst.create ~dtype:"DT_INT32" aname [||] aval) in
+
+    let cinpt = Array.append inputs [|aname|] in
+    let cnode = TFConcat (TFConcat.create name cinpt out_shp) in
+
+    [|cnode; anode|], ("", "")
 
 
   (* The logic of how one owl node turned into multiple tfnodes is implemented
@@ -468,6 +476,7 @@ module Make
       let input_shape = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shape - 1) in
       make_min_nodes name inputs out_shp axes false
+    | Concatenate axis    -> make_concat_nodes name inputs out_shp axis
     | OfArray shp         -> make_ofarray_2d_nodes name inputs out_shp shp
     (* Only support 1-dim array for now; may need to find a more proper tensorlfow operation *)
     | Var                 -> [| TFPlaceholder (TFPlaceholder.create name out_shp) |], ("", "")
