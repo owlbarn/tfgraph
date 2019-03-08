@@ -268,6 +268,19 @@ module Make
     [|cnode; snode|], ("", "")
 
 
+  let make_conv2dbackkernel_nodes name inputs out_shp padding strides =
+    let sname = name ^ "/filter_sizes" in
+    (* NOTE: construct a const node like this is not the only way to represent
+     * the shape; a ShapeN node could also be used here.
+     *)
+    let snode = make_index_node out_shp sname in
+    let strides = [|1; strides.(0); strides.(1); 1|] in
+    let inputs = Array.append inputs [|sname|] in
+    let cnode = TFConv2DBackFilter (TFConv2DBackFilter.create name
+      inputs out_shp padding strides) in
+    [|cnode; snode|], ("", "")
+
+
   let make_ofarray_2d_nodes name inputs out_shp shp =
     if (Array.length shp = 1) then (
       [| TFPack (TFPack.create name inputs out_shp 0) |], ("", "")
@@ -443,6 +456,7 @@ module Make
     | Conv2d (p, s)           ->
       let s = [|1; s.(0); s.(1); 1|] in
       [| TFConv2D (TFConv2D.create name inputs out_shp p s) |], ("", "")
+    | Conv2dBackwardKernel s  -> make_conv2dbackkernel_nodes name inputs out_shp Owl_types_common.SAME s
     | Conv2dBackwardInput s   -> make_conv2dbackinput_nodes name inputs out_shp Owl_types_common.SAME s
     | TransposeConv2d (p, s)  -> make_conv2dbackinput_nodes name inputs out_shp p s
     | DilatedConv2d (p, s, d) ->
