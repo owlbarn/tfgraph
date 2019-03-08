@@ -2509,7 +2509,6 @@ module TFConv2D = struct
   let opname = "Conv2D"
 
 
-  (* To update *)
   let opdef =
     let input_arg  = [|
       make_argdef ~typ_attr:"T" "input";
@@ -2531,7 +2530,7 @@ module TFConv2D = struct
     make_opdef ~input_arg ~output_arg ~attr opname
 
 
-  let create ?(cls=[||]) ?(device="") name inputs out_shp padding strides =
+  let create ?(cls=[||]) ?(device="") ?(dilations=[|1;1;1;1|]) name inputs out_shp padding strides =
     let padding =
       match padding with
       | Owl_types_common.SAME  -> "SAME"
@@ -2544,7 +2543,116 @@ module TFConv2D = struct
       out_shp     = out_shp;
       strides     = strides;
       padding     = padding;
-      dilations   = [|1;1;1;1|];
+      dilations   = dilations;
+      data_format = "NHWC";
+      dtype       = "DT_FLOAT";
+      device      = device;
+      cls         = cls;
+    }
+
+
+  let make_nodedef n =
+    let node_attr = [|
+      ("strides", (ATTR_List (Array.map (fun n -> ATTR_Int n) n.strides)));
+      ("dilations", (ATTR_List (Array.map (fun n -> ATTR_Int n) n.dilations)));
+      ("padding", (ATTR_String n.padding));
+      ("data_format", (ATTR_String n.data_format));
+      ("T", (ATTR_Type "DT_FLOAT"));
+      ("_output_shapes", (ATTR_List [|(ATTR_Shape n.out_shp)|]))
+    |] in
+    let cls_attr = Array.map (fun c -> ATTR_String ("loc:@" ^ c)) n.cls in
+    let node_attr = if (cls_attr = [||]) then node_attr else
+      (Array.append node_attr [| ("_class", ATTR_List cls_attr) |])
+    in
+    {
+      name      = n.name;
+      op_name   = opname;
+      input     = n.inputs;
+      node_attr = node_attr;
+      device    = n.device
+    }
+
+
+  let to_pbtxt n =
+    make_nodedef n |> nodedef_to_pbtxt
+
+
+  let get_name n = n.name
+
+
+  let get_output_shape n = n.out_shp
+
+
+  let get_inputs n = n.inputs
+
+
+  let set_inputs n i = n.inputs <- i
+
+
+  let get_device n = n.device
+
+
+  let set_device n d = n.device <- d
+
+end
+
+
+module TFConv2DBackInput = struct
+
+  type t = {
+    mutable name        : string;
+    mutable op_name     : string;
+    mutable inputs      : string array;
+    mutable out_shp     : int array;
+    mutable dtype       : string;
+    mutable device      : string;
+    mutable cls         : string array;
+    mutable strides     : int array;
+    mutable padding     : string;
+    mutable dilations   : int array;
+    mutable data_format : string;
+  }
+
+
+  let opname = "Conv2DBackpropInput"
+
+
+  let opdef =
+    let input_arg  = [|
+      make_argdef ~typ_attr:"T" "out_backprop";
+      make_argdef ~typ_attr:"T" "filter";
+      make_argdef ~typ:"DT_INT32" "input_sizes";
+    |]
+    in
+    let output_arg = [|
+      make_argdef ~typ_attr:"T" "output";
+    |]
+    in
+    let attr = [|
+      make_tfop_attr "T" "type";
+      make_tfop_attr "strides" "list(int)";
+      make_tfop_attr "padding" "string";
+      make_tfop_attr "dilations" "list(int)";
+      make_tfop_attr "data_format" "string";
+    |]
+    in
+    make_opdef ~input_arg ~output_arg ~attr opname
+
+
+  let create ?(cls=[||]) ?(device="") ?(dilations=[|1;1;1;1|]) name inputs out_shp padding strides =
+    let padding =
+      match padding with
+      | Owl_types_common.SAME  -> "SAME"
+      | Owl_types_common.VALID -> "VALID"
+    in
+    {
+      name        = name;
+      op_name     = opname;
+      inputs      = inputs;
+      out_shp     = out_shp;
+      strides     = strides;
+      padding     = padding;
+      dilations   = dilations;
       data_format = "NHWC";
       dtype       = "DT_FLOAT";
       device      = device;
@@ -4549,6 +4657,7 @@ type tfnode =
   | TFMaximum        of TFMaximum.t
   | TFRelu           of TFRelu.t
   | TFConv2D         of TFConv2D.t
+  | TFConv2DBackInput of TFConv2DBackInput.t
   | TFMaxPool        of TFMaxPool.t
   | TFAvgPool        of TFAvgPool.t
   | TFConst          of TFConst.t
@@ -4605,6 +4714,7 @@ let to_pbtxt = function
   | TFMaximum        n -> TFMaximum.to_pbtxt n
   | TFRelu           n -> TFRelu.to_pbtxt n
   | TFConv2D         n -> TFConv2D.to_pbtxt n
+  | TFConv2DBackInput n -> TFConv2DBackInput.to_pbtxt n
   | TFMaxPool        n -> TFMaxPool.to_pbtxt n
   | TFAvgPool        n -> TFAvgPool.to_pbtxt n
   | TFConst          n -> TFConst.to_pbtxt n
@@ -4661,6 +4771,7 @@ let get_name = function
   | TFMaximum        n -> TFMaximum.get_name n
   | TFRelu           n -> TFRelu.get_name n
   | TFConv2D         n -> TFConv2D.get_name n
+  | TFConv2DBackInput n -> TFConv2DBackInput.get_name n
   | TFMaxPool        n -> TFMaxPool.get_name n
   | TFAvgPool        n -> TFAvgPool.get_name n
   | TFConst          n -> TFConst.get_name n
@@ -4717,6 +4828,7 @@ let get_op_name = function
   | TFMaximum        _ -> TFMaximum.opname
   | TFRelu           _ -> TFRelu.opname
   | TFConv2D         _ -> TFConv2D.opname
+  | TFConv2DBackInput _ -> TFConv2DBackInput.opname
   | TFMaxPool        _ -> TFMaxPool.opname
   | TFAvgPool        _ -> TFAvgPool.opname
   | TFConst          _ -> TFConst.opname
@@ -4773,6 +4885,7 @@ let get_opdef = function
   | TFMaximum        _ -> TFMaximum.opdef
   | TFRelu           _ -> TFRelu.opdef
   | TFConv2D         _ -> TFConv2D.opdef
+  | TFConv2DBackInput _ -> TFConv2DBackInput.opdef
   | TFMaxPool        _ -> TFMaxPool.opdef
   | TFAvgPool        _ -> TFAvgPool.opdef
   | TFConst          _ -> TFConst.opdef
@@ -4829,6 +4942,7 @@ let get_output_shape = function
   | TFMaximum        n -> TFMaximum.get_output_shape n
   | TFRelu           n -> TFRelu.get_output_shape n
   | TFConv2D         n -> TFConv2D.get_output_shape n
+  | TFConv2DBackInput n -> TFConv2DBackInput.get_output_shape n
   | TFMaxPool        n -> TFMaxPool.get_output_shape n
   | TFAvgPool        n -> TFAvgPool.get_output_shape n
   | TFConst          n -> TFConst.get_output_shape n
@@ -4890,6 +5004,7 @@ let get_inputs = function
   | TFMaximum        n -> TFMaximum.get_inputs n
   | TFRelu           n -> TFRelu.get_inputs n
   | TFConv2D         n -> TFConv2D.get_inputs n
+  | TFConv2DBackInput n -> TFConv2DBackInput.get_inputs n
   | TFMaxPool        n -> TFMaxPool.get_inputs n
   | TFAvgPool        n -> TFAvgPool.get_inputs n
   | TFConst          n -> TFConst.get_inputs n
@@ -4946,6 +5061,7 @@ let set_inputs = function
   | TFMaximum        n -> TFMaximum.set_inputs n
   | TFRelu           n -> TFRelu.set_inputs n
   | TFConv2D         n -> TFConv2D.set_inputs n
+  | TFConv2DBackInput n -> TFConv2DBackInput.set_inputs n
   | TFMaxPool        n -> TFMaxPool.set_inputs n
   | TFAvgPool        n -> TFAvgPool.set_inputs n
   | TFConst          n -> TFConst.set_inputs n
@@ -5002,6 +5118,7 @@ let get_device = function
   | TFMaximum        n -> TFMaximum.get_device n
   | TFRelu           n -> TFRelu.get_device n
   | TFConv2D         n -> TFConv2D.get_device n
+  | TFConv2DBackInput n -> TFConv2DBackInput.get_device n
   | TFMaxPool        n -> TFMaxPool.get_device n
   | TFAvgPool        n -> TFAvgPool.get_device n
   | TFConst          n -> TFConst.get_device n
@@ -5058,6 +5175,7 @@ let set_device = function
   | TFMaximum        n -> TFMaximum.set_device n
   | TFRelu           n -> TFRelu.set_device n
   | TFConv2D         n -> TFConv2D.set_device n
+  | TFConv2DBackInput n -> TFConv2DBackInput.set_device n
   | TFMaxPool        n -> TFMaxPool.set_device n
   | TFAvgPool        n -> TFAvgPool.set_device n
   | TFConst          n -> TFConst.set_device n

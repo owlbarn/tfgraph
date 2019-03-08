@@ -258,6 +258,16 @@ module Make
     (Array.append sumnodes [|anode|]), (name, sumname)
 
 
+  let make_conv2dbackinput_nodes name inputs out_shp padding strides =
+    let sname = name ^ "/output_shape" in
+    let snode = make_index_node out_shp sname in
+    let strides = [|1; strides.(0); strides.(1); 1|] in
+    let inputs = Array.append inputs [|sname|] in
+    let cnode = TFConv2DBackInput (TFConv2DBackInput.create name
+      inputs out_shp padding strides) in
+    [|cnode; snode|], ("", "")
+
+
   let make_ofarray_2d_nodes name inputs out_shp shp =
     if (Array.length shp = 1) then (
       [| TFPack (TFPack.create name inputs out_shp 0) |], ("", "")
@@ -332,7 +342,7 @@ module Make
    * `draw` operation in owl CGraph returns two outputs, so I'll stick with
    * this tmp solution for now.
    *
-   * NOTE: Another thing is that, even if tfgraph is taken in as a paramter,
+   * NOTE: Another thing is that, even if tfgraph is taken in as a parameter,
    * that still doesn't ensure a node have global access -- in Sum's case, it
    * needs access to its parents, which are not put into tfgraph yet.
    *)
@@ -351,143 +361,149 @@ module Make
       | None   -> [||]
     in
     match attr.op with
-    | Abs                 -> [| TFAbs (TFAbs.create name inputs out_shp)|], ("", "")
-    | Scalar_Abs          -> [| TFAbs (TFAbs.create name inputs out_shp)|], ("", "")
-    | Neg                 -> [| TFNeg (TFNeg.create name inputs out_shp)|], ("", "")
-    | Scalar_Neg          -> [| TFNeg (TFNeg.create name inputs out_shp)|], ("", "")
-    | Exp                 -> [| TFExp (TFExp.create name inputs out_shp)|], ("", "")
-    | Scalar_Exp          -> [| TFExp (TFExp.create name inputs out_shp)|], ("", "")
-    | Log                 -> [| TFLog (TFLog.create name inputs out_shp)|], ("", "")
-    | Log2                -> make_log_nodes name inputs out_shp 2
-    | Log10               -> make_log_nodes name inputs out_shp 10
-    | Scalar_Log          -> [| TFLog (TFLog.create name inputs out_shp)|], ("", "")
-    | Scalar_Log2         -> make_log_nodes name inputs out_shp 2
-    | Scalar_Log10        -> make_log_nodes name inputs out_shp 10
-    | Sqr                 -> [| TFSquare (TFSquare.create name inputs out_shp)|], ("", "")
-    | Scalar_Sqr          -> [| TFSquare (TFSquare.create name inputs out_shp)|], ("", "")
-    | Sqrt                -> [| TFSqrt (TFSqrt.create name inputs out_shp)|], ("", "")
-    | Scalar_Sqrt         -> [| TFSqrt (TFSqrt.create name inputs out_shp)|], ("", "")
-    | Sin                 -> [| TFSin (TFSin.create name inputs out_shp)|], ("", "")
-    | Cos                 -> [| TFCos (TFCos.create name inputs out_shp)|], ("", "")
-    | Tan                 -> [| TFTan (TFTan.create name inputs out_shp)|], ("", "")
-    | Sinh                -> [| TFSinh (TFSinh.create name inputs out_shp)|], ("", "")
-    | Cosh                -> [| TFCosh (TFCosh.create name inputs out_shp)|], ("", "")
-    | Tanh                -> [| TFTanh (TFTanh.create name inputs out_shp)|], ("", "")
-    | Asin                -> [| TFAsin (TFAsin.create name inputs out_shp)|], ("", "")
-    | Acos                -> [| TFAcos (TFAcos.create name inputs out_shp)|], ("", "")
-    | Atan                -> [| TFAtan (TFAtan.create name inputs out_shp)|], ("", "")
-    | Asinh               -> [| TFAsinh (TFAsinh.create name inputs out_shp)|], ("", "")
-    | Acosh               -> [| TFCosh (TFCosh.create name inputs out_shp)|], ("", "")
-    | Atanh               -> [| TFAtanh (TFAtanh.create name inputs out_shp)|], ("", "")
-    | Scalar_Sin          -> [| TFSin (TFSin.create name inputs out_shp)|], ("", "")
-    | Scalar_Cos          -> [| TFCos (TFCos.create name inputs out_shp)|], ("", "")
-    | Scalar_Tan          -> [| TFTan (TFTan.create name inputs out_shp)|], ("", "")
-    | Scalar_Sinh         -> [| TFSinh (TFSinh.create name inputs out_shp)|], ("", "")
-    | Scalar_Cosh         -> [| TFCosh (TFCosh.create name inputs out_shp)|], ("", "")
-    | Scalar_Tanh         -> [| TFTanh (TFTanh.create name inputs out_shp)|], ("", "")
-    | Scalar_Asin         -> [| TFAsin (TFAsin.create name inputs out_shp)|], ("", "")
-    | Scalar_Acos         -> [| TFAcos (TFAcos.create name inputs out_shp)|], ("", "")
-    | Scalar_Atan         -> [| TFAtan (TFAtan.create name inputs out_shp)|], ("", "")
-    | Scalar_Asinh        -> [| TFAsinh (TFAsinh.create name inputs out_shp)|], ("", "")
-    | Scalar_Acosh        -> [| TFCosh (TFCosh.create name inputs out_shp)|], ("", "")
-    | Scalar_Atanh        -> [| TFAtanh (TFAtanh.create name inputs out_shp)|], ("", "")
-    | Sigmoid             -> [| TFSigmoid (TFSigmoid.create name inputs out_shp)|], ("", "")
-    | Scalar_Sigmoid      -> [| TFSigmoid (TFSigmoid.create name inputs out_shp)|], ("", "")
-    | Dot (a, b, _, _)    -> [| TFMatMul (TFMatMul.create name inputs out_shp a b) |], ("", "")
-    | Add                 -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "") (* TODO: actually, it will be translated to TFBiasAdd in DNN example; need to investigate if any condition is included. *)
-    | ScalarAdd           -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "")
-    | Scalar_Add          -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "") (* what's the difference? *)
-    | AddScalar           -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "")
-    | Sub                 -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
-    | ScalarSub           -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
-    | SubScalar           -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
-    | Mul                 -> [| TFMul (TFMul.create name inputs out_shp) |], ("", "")
-    | MulScalar           -> [| TFMul (TFMul.create name inputs out_shp) |], ("", "")
-    | ScalarMul           -> [| TFMul (TFMul.create name inputs out_shp) |], ("", "")
-    | Div                 -> [| TFDiv (TFDiv.create name inputs out_shp) |], ("", "")
-    | DivScalar           -> [| TFDiv (TFDiv.create name inputs out_shp) |], ("", "")
-    | ScalarDiv           -> [| TFDiv (TFDiv.create name inputs out_shp) |], ("", "")
-    | Scalar_Div          -> [| TFDiv (TFDiv.create name inputs out_shp) |], ("", "")
-    | Pow                 -> [| TFPow (TFPow.create name inputs out_shp) |], ("", "")
-    | Scalar_Pow          -> [| TFPow (TFPow.create name inputs out_shp) |], ("", "")
-    | PowScalar           -> [| TFPow (TFPow.create name inputs out_shp) |], ("", "")
-    | Relu                -> [| TFRelu (TFRelu.create name inputs out_shp) |], ("", "")
-    | Scalar_Relu         -> [| TFRelu (TFRelu.create name inputs out_shp) |], ("", "")
-    | Transpose perm      -> make_transpose_nodes name inputs out_shp perm
-    | Inv                 -> [| TFMatrixInverse (TFMatrixInverse.create name inputs out_shp) |], ("", "")
-    | Trace               ->
+    | Abs                     -> [| TFAbs (TFAbs.create name inputs out_shp)|], ("", "")
+    | Scalar_Abs              -> [| TFAbs (TFAbs.create name inputs out_shp)|], ("", "")
+    | Neg                     -> [| TFNeg (TFNeg.create name inputs out_shp)|], ("", "")
+    | Scalar_Neg              -> [| TFNeg (TFNeg.create name inputs out_shp)|], ("", "")
+    | Exp                     -> [| TFExp (TFExp.create name inputs out_shp)|], ("", "")
+    | Scalar_Exp              -> [| TFExp (TFExp.create name inputs out_shp)|], ("", "")
+    | Log                     -> [| TFLog (TFLog.create name inputs out_shp)|], ("", "")
+    | Log2                    -> make_log_nodes name inputs out_shp 2
+    | Log10                   -> make_log_nodes name inputs out_shp 10
+    | Scalar_Log              -> [| TFLog (TFLog.create name inputs out_shp)|], ("", "")
+    | Scalar_Log2             -> make_log_nodes name inputs out_shp 2
+    | Scalar_Log10            -> make_log_nodes name inputs out_shp 10
+    | Sqr                     -> [| TFSquare (TFSquare.create name inputs out_shp)|], ("", "")
+    | Scalar_Sqr              -> [| TFSquare (TFSquare.create name inputs out_shp)|], ("", "")
+    | Sqrt                    -> [| TFSqrt (TFSqrt.create name inputs out_shp)|], ("", "")
+    | Scalar_Sqrt             -> [| TFSqrt (TFSqrt.create name inputs out_shp)|], ("", "")
+    | Sin                     -> [| TFSin (TFSin.create name inputs out_shp)|], ("", "")
+    | Cos                     -> [| TFCos (TFCos.create name inputs out_shp)|], ("", "")
+    | Tan                     -> [| TFTan (TFTan.create name inputs out_shp)|], ("", "")
+    | Sinh                    -> [| TFSinh (TFSinh.create name inputs out_shp)|], ("", "")
+    | Cosh                    -> [| TFCosh (TFCosh.create name inputs out_shp)|], ("", "")
+    | Tanh                    -> [| TFTanh (TFTanh.create name inputs out_shp)|], ("", "")
+    | Asin                    -> [| TFAsin (TFAsin.create name inputs out_shp)|], ("", "")
+    | Acos                    -> [| TFAcos (TFAcos.create name inputs out_shp)|], ("", "")
+    | Atan                    -> [| TFAtan (TFAtan.create name inputs out_shp)|], ("", "")
+    | Asinh                   -> [| TFAsinh (TFAsinh.create name inputs out_shp)|], ("", "")
+    | Acosh                   -> [| TFCosh (TFCosh.create name inputs out_shp)|], ("", "")
+    | Atanh                   -> [| TFAtanh (TFAtanh.create name inputs out_shp)|], ("", "")
+    | Scalar_Sin              -> [| TFSin (TFSin.create name inputs out_shp)|], ("", "")
+    | Scalar_Cos              -> [| TFCos (TFCos.create name inputs out_shp)|], ("", "")
+    | Scalar_Tan              -> [| TFTan (TFTan.create name inputs out_shp)|], ("", "")
+    | Scalar_Sinh             -> [| TFSinh (TFSinh.create name inputs out_shp)|], ("", "")
+    | Scalar_Cosh             -> [| TFCosh (TFCosh.create name inputs out_shp)|], ("", "")
+    | Scalar_Tanh             -> [| TFTanh (TFTanh.create name inputs out_shp)|], ("", "")
+    | Scalar_Asin             -> [| TFAsin (TFAsin.create name inputs out_shp)|], ("", "")
+    | Scalar_Acos             -> [| TFAcos (TFAcos.create name inputs out_shp)|], ("", "")
+    | Scalar_Atan             -> [| TFAtan (TFAtan.create name inputs out_shp)|], ("", "")
+    | Scalar_Asinh            -> [| TFAsinh (TFAsinh.create name inputs out_shp)|], ("", "")
+    | Scalar_Acosh            -> [| TFCosh (TFCosh.create name inputs out_shp)|], ("", "")
+    | Scalar_Atanh            -> [| TFAtanh (TFAtanh.create name inputs out_shp)|], ("", "")
+    | Sigmoid                 -> [| TFSigmoid (TFSigmoid.create name inputs out_shp)|], ("", "")
+    | Scalar_Sigmoid          -> [| TFSigmoid (TFSigmoid.create name inputs out_shp)|], ("", "")
+    | Dot (a, b, _, _)        -> [| TFMatMul (TFMatMul.create name inputs out_shp a b) |], ("", "")
+    | Add                     -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "") (* TODO: actually, it will be translated to TFBiasAdd in DNN example; need to investigate if any condition is included. *)
+    | ScalarAdd               -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "")
+    | Scalar_Add              -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "") (* what's the difference? *)
+    | AddScalar               -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "")
+    | Sub                     -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
+    | ScalarSub               -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
+    | SubScalar               -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
+    | Mul                     -> [| TFMul (TFMul.create name inputs out_shp) |], ("", "")
+    | MulScalar               -> [| TFMul (TFMul.create name inputs out_shp) |], ("", "")
+    | ScalarMul               -> [| TFMul (TFMul.create name inputs out_shp) |], ("", "")
+    | Div                     -> [| TFDiv (TFDiv.create name inputs out_shp) |], ("", "")
+    | DivScalar               -> [| TFDiv (TFDiv.create name inputs out_shp) |], ("", "")
+    | ScalarDiv               -> [| TFDiv (TFDiv.create name inputs out_shp) |], ("", "")
+    | Scalar_Div              -> [| TFDiv (TFDiv.create name inputs out_shp) |], ("", "")
+    | Pow                     -> [| TFPow (TFPow.create name inputs out_shp) |], ("", "")
+    | Scalar_Pow              -> [| TFPow (TFPow.create name inputs out_shp) |], ("", "")
+    | PowScalar               -> [| TFPow (TFPow.create name inputs out_shp) |], ("", "")
+    | Relu                    -> [| TFRelu (TFRelu.create name inputs out_shp) |], ("", "")
+    | Scalar_Relu             -> [| TFRelu (TFRelu.create name inputs out_shp) |], ("", "")
+    | Transpose perm          -> make_transpose_nodes name inputs out_shp perm
+    | Inv                     -> [| TFMatrixInverse (TFMatrixInverse.create name inputs out_shp) |], ("", "")
+    | Trace                   ->
       let input_shp = _get_input_shape node in
       make_trace_nodes name inputs out_shp input_shp
-    | L2NormSqr'          ->
+    | L2NormSqr'              ->
       let input_shp = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shp - 1) in
       make_l2norm_sqr_nodes name inputs input_shp out_shp axes false
-    | L2norm'             ->
+    | L2norm'                 ->
       let input_shp = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shp - 1) in
       make_l2norm_nodes name inputs input_shp out_shp axes false
-    | L1norm'             ->
+    | L1norm'                 ->
       let input_shp = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shp - 1) in
       make_l1norm_nodes name inputs input_shp out_shp axes false
-    | Conv2d (p, s)       ->
+    | Conv2d (p, s)           ->
       let s = [|1; s.(0); s.(1); 1|] in
       [| TFConv2D (TFConv2D.create name inputs out_shp p s) |], ("", "")
-    | MaxPool1d (p, s, k) ->
+    | Conv2dBackwardInput s   -> make_conv2dbackinput_nodes name inputs out_shp Owl_types_common.SAME s
+    | TransposeConv2d (p, s)  -> make_conv2dbackinput_nodes name inputs out_shp p s
+    | DilatedConv2d (p, s, d) ->
+      let s = [|1; s.(0); s.(1); 1|] in
+      let d = [|1; d.(0); d.(1); 1|] in
+      [| TFConv2D (TFConv2D.create ~dilations:d name inputs out_shp p s) |], ("", "")
+    | MaxPool1d (p, s, k)     ->
       let s = [|1; s.(0); 1|] in
       let k = [|1; k.(0); 1|] in
       [| TFMaxPool (TFMaxPool.create name inputs out_shp p s k) |], ("", "")
-    | AvgPool1d (p, s, k) ->
+    | AvgPool1d (p, s, k)     ->
       let s = [|1; s.(0); 1|] in
       let k = [|1; k.(0); 1|] in
       [| TFAvgPool (TFAvgPool.create name inputs out_shp p s k) |], ("", "")
-    | MaxPool2d (p, s, k) ->
+    | MaxPool2d (p, s, k)     ->
       let s = [|1; s.(0); s.(1); 1|] in
       let k = [|1; k.(0); k.(1); 1|] in
       [| TFMaxPool (TFMaxPool.create name inputs out_shp p s k) |], ("", "")
-    | AvgPool2d (p, s, k) ->
+    | AvgPool2d (p, s, k)     ->
       let s = [|1; s.(0); s.(1); 1|] in
       let k = [|1; k.(0); k.(1); 1|] in
       [| TFAvgPool (TFAvgPool.create name inputs out_shp p s k) |], ("", "")
-    | Sum a               -> make_sum_nodes name inputs out_shp [|a|] true
-    | SumReduce a         -> make_sum_nodes name inputs out_shp a true
-    | Sum'                ->
+    | Sum a                   -> make_sum_nodes name inputs out_shp [|a|] true
+    | SumReduce a             -> make_sum_nodes name inputs out_shp a true
+    | Sum'                    ->
       let input_shape = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shape - 1) in
       make_sum_nodes name inputs out_shp axes false
-    | Max a               -> make_max_nodes name inputs out_shp [|a|] true
-    | Max'                ->
+    | Max a                   -> make_max_nodes name inputs out_shp [|a|] true
+    | Max'                    ->
       let input_shape = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shape - 1) in
       make_max_nodes name inputs out_shp axes false
-    | Min a               -> make_min_nodes name inputs out_shp [|a|] true
-    | Min'                ->
+    | Min a                   -> make_min_nodes name inputs out_shp [|a|] true
+    | Min'                    ->
       let input_shape = _get_input_shape node in
       let axes = Owl_utils_array.range 0 (Array.length input_shape - 1) in
       make_min_nodes name inputs out_shp axes false
-    | Concatenate axis    -> make_concat_nodes name inputs out_shp axis
-    | Tile axes           -> make_tile_nodes name inputs out_shp axes
-    | OfArray shp         -> make_ofarray_2d_nodes name inputs out_shp shp
+    | Concatenate axis        -> make_concat_nodes name inputs out_shp axis
+    | Tile axes               -> make_tile_nodes name inputs out_shp axes
+    | OfArray shp             -> make_ofarray_2d_nodes name inputs out_shp shp
     (* Only support 1-dim array for now; may need to find a more proper tensorlfow operation *)
-    | Var                 -> [| TFPlaceholder (TFPlaceholder.create name out_shp) |], ("", "")
-    | Const               ->
+    | Var                     -> [| TFPlaceholder (TFPlaceholder.create name out_shp) |], ("", "")
+    | Const                   ->
       let value = get_const_value attr in
       [| TFConst (TFConst.create ~dtype:"DT_FLOAT" name out_shp value) |], ("", "")
-    | Reshape s           -> make_reshape_nodes name inputs s
-    | Ones _              -> make_variable_nodes attr.op name out_shp
-    | Zeros _             -> make_variable_nodes attr.op name out_shp
-    | Uniform _           -> make_variable_nodes attr.op name out_shp
-    | Get i               ->
+    | Reshape s               -> make_reshape_nodes name inputs s
+    | Ones _                  -> make_variable_nodes attr.op name out_shp
+    | Zeros _                 -> make_variable_nodes attr.op name out_shp
+    | Uniform _               -> make_variable_nodes attr.op name out_shp
+    | Get i                   ->
       let b = i in let e = i in
       let len = Array.length i in
       let s = Array.make len 1 in
       let shinrk_mask = (2. ** (float_of_int len) |> int_of_float) - 1 in
       make_stridedslice_nodes name inputs out_shp b e s shinrk_mask
-    | GetSlice i          -> (* be carefull when index contains less item than the full length *)
+    | GetSlice i              -> (* be carefull when index contains less item than the full length *)
       let input_shp = _get_input_shape node in
       let b, e, s = Tfgraph_utils.get_slice_param i input_shp in
       make_stridedslice_nodes name inputs out_shp b e s 0
-    | _                   -> let err = Printf.sprintf "unsupported operation: %s" (Symbol.op_to_str attr.op) in failwith err
+    | _                       -> let err = Printf.sprintf "unsupported operation: %s" (Symbol.op_to_str attr.op) in failwith err
 
 
   (* not a very good name... *)
