@@ -4434,6 +4434,91 @@ module TFConcat = struct
 end
 
 
+module TFTile = struct
+
+  type t = {
+    mutable name    : string;
+    mutable op_name : string;
+    mutable inputs  : string array;
+    mutable out_shp : int array;
+    mutable dtype   : string;
+    mutable device  : string;
+    mutable cls     : string array;
+  }
+
+
+  let opname = "Tile"
+
+
+  let opdef =
+    let input_arg  = [|
+      make_argdef ~typ_attr:"T" "input";
+      make_argdef ~typ_attr:"Tmultiples" "multiples"
+    |] in
+    let output_arg = [| make_argdef ~typ_attr:"T" "output" |] in
+    let attr = [|
+      make_tfop_attr "T" "type";
+      make_tfop_attr "Tmultiples" "type";
+    |]
+    in
+    make_opdef ~input_arg ~output_arg ~attr opname
+
+
+  let create ?(cls=[||]) ?(dtype="DT_FLOAT") ?(device="") name inputs out_shp =
+    {
+      name    = name;
+      op_name = opname;
+      inputs  = inputs;
+      out_shp = out_shp;
+      dtype   = dtype;
+      device  = device;
+      cls     = cls;
+    }
+
+
+  let make_nodedef n =
+    let node_attr = [|
+      ("T", (ATTR_Type n.dtype));
+      ("Tmultiples", (ATTR_Type "DT_INT32"));
+      ("_output_shapes", (ATTR_List [|(ATTR_Shape n.out_shp)|]));
+    |] in
+    let cls_attr = Array.map (fun c -> ATTR_String ("loc:@" ^ c)) n.cls in
+    let node_attr = if (cls_attr = [||]) then node_attr else
+      (Array.append node_attr [| ("_class", ATTR_List cls_attr) |])
+    in
+    {
+      name      = n.name;
+      op_name   = opname;
+      input     = n.inputs;
+      node_attr = node_attr;
+      device    = n.device
+    }
+
+
+  let to_pbtxt n =
+    make_nodedef n |> nodedef_to_pbtxt
+
+
+  let get_name n = n.name
+
+
+  let get_output_shape n = n.out_shp
+
+
+  let get_inputs n = n.inputs
+
+
+  let set_inputs n i = n.inputs <- i
+
+
+  let get_device n = n.device
+
+
+  let set_device n d = n.device <- d
+
+end
+
+
 type tfnode =
   | TFAbs            of TFAbs.t
   | TFNeg            of TFNeg.t
@@ -4486,6 +4571,7 @@ type tfnode =
   | TFMatrixInverse  of TFMatrixInverse.t
   | TFMatrixDiagPart of TFMatrixDiagPart.t
   | TFConcat         of TFConcat.t
+  | TFTile           of TFTile.t
   | TFNoop           of TFNoop.t
 
 
@@ -4541,6 +4627,7 @@ let to_pbtxt = function
   | TFMatrixInverse  n -> TFMatrixInverse.to_pbtxt n
   | TFMatrixDiagPart n -> TFMatrixDiagPart.to_pbtxt n
   | TFConcat         n -> TFConcat.to_pbtxt n
+  | TFTile           n -> TFTile.to_pbtxt n
   | TFNoop           n -> TFNoop.to_pbtxt n
 
 
@@ -4596,6 +4683,7 @@ let get_name = function
   | TFMatrixInverse  n -> TFMatrixInverse.get_name n
   | TFMatrixDiagPart n -> TFMatrixDiagPart.get_name n
   | TFConcat         n -> TFConcat.get_name n
+  | TFTile           n -> TFTile.get_name n
   | TFNoop           n -> TFNoop.get_name n
 
 
@@ -4651,6 +4739,7 @@ let get_op_name = function
   | TFMatrixInverse  _ -> TFMatrixInverse.opname
   | TFMatrixDiagPart _ -> TFMatrixDiagPart.opname
   | TFConcat         _ -> TFConcat.opname
+  | TFTile           _ -> TFTile.opname
   | TFNoop           _ -> TFNoop.opname
 
 
@@ -4706,6 +4795,7 @@ let get_opdef = function
   | TFMatrixInverse  _ -> TFMatrixInverse.opdef
   | TFMatrixDiagPart _ -> TFMatrixDiagPart.opdef
   | TFConcat         _ -> TFConcat.opdef
+  | TFTile           _ -> TFTile.opdef
   | TFNoop           _ -> TFNoop.opdef
 
 
@@ -4761,6 +4851,7 @@ let get_output_shape = function
   | TFMatrixInverse  n -> TFMatrixInverse.get_output_shape n
   | TFMatrixDiagPart n -> TFMatrixDiagPart.get_output_shape n
   | TFConcat         n -> TFConcat.get_output_shape n
+  | TFTile           n -> TFTile.get_output_shape n
   | TFNoop           n -> TFNoop.get_output_shape n
 
 
@@ -4821,6 +4912,7 @@ let get_inputs = function
   | TFMatrixInverse  n -> TFMatrixInverse.get_inputs n
   | TFMatrixDiagPart n -> TFMatrixDiagPart.get_inputs n
   | TFConcat         n -> TFConcat.get_inputs n
+  | TFTile           n -> TFTile.get_inputs n
   | _                  -> [||]
 
 
@@ -4876,6 +4968,7 @@ let set_inputs = function
   | TFMatrixInverse  n -> TFMatrixInverse.set_inputs n
   | TFMatrixDiagPart n -> TFMatrixDiagPart.set_inputs n
   | TFConcat         n -> TFConcat.set_inputs n
+  | TFTile           n -> TFTile.set_inputs n
   | _                  -> fun _ -> ()
 
 
@@ -4931,6 +5024,7 @@ let get_device = function
   | TFMatrixInverse  n -> TFMatrixInverse.get_device n
   | TFMatrixDiagPart n -> TFMatrixDiagPart.get_device n
   | TFConcat         n -> TFConcat.get_device n
+  | TFTile           n -> TFTile.get_device n
   | TFNoop           n -> TFNoop.get_device n
 
 
@@ -4986,6 +5080,7 @@ let set_device = function
   | TFMatrixInverse  n -> TFMatrixInverse.set_device n
   | TFMatrixDiagPart n -> TFMatrixDiagPart.set_device n
   | TFConcat         n -> TFConcat.set_device n
+  | TFTile           n -> TFTile.set_device n
   | TFNoop           n -> TFNoop.set_device n
 
 

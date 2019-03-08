@@ -65,15 +65,19 @@ module Make
     ) else ATTR_Nil
 
 
-  let _make_uniform_initialiser name shp =
-    let shp_str = Owl_utils_array.to_string ~sep:"," string_of_int shp in
+  let make_index_node idx name =
+    let idx_str = Owl_utils_array.to_string ~sep:"," string_of_int idx in
     let tensor_content = Tfgraph_utils.serialise_tensor_content
-      "int32" shp_str
-    in
-    let tvalue = make_tftensor ~tensor_content "DT_INT32" [|Array.length shp|] in
-    let sname = name ^ "/shape" in
-    let shape = TFConst (TFConst.create ~dtype:"DT_INT32" sname [|Array.length shp|] (ATTR_Tensor tvalue)) in
+      "int32" idx_str in
+    let tval  = ATTR_Tensor (make_tftensor ~tensor_content "DT_INT32"
+      [|Array.length idx|]) in
+    TFConst (TFConst.create ~dtype:"DT_INT32" name
+      [|Array.length idx|] tval)
 
+
+  let _make_uniform_initialiser name shp =
+    let sname = name ^ "/shape" in
+    let shape = make_index_node shp sname in
     (* RandomUniform node *)
     let ru_name = name in
     let ru = TFRandomUniform (TFRandomUniform.create ru_name [|sname|] shp 0 0) in
@@ -149,13 +153,7 @@ module Make
       let atensor = ATTR_Tensor (make_tftensor ~int_val:axes "DT_INT32" [||]) in
       TFConst (TFConst.create ~dtype:"DT_INT32" aname [||] atensor)
     ) else (
-      let axes_str = Owl_utils_array.to_string ~sep:"," string_of_int axes in
-      let tensor_content = Tfgraph_utils.serialise_tensor_content
-        "int32" axes_str in
-      let atensor = ATTR_Tensor (make_tftensor ~tensor_content
-        "DT_INT32" [|Array.length axes|]) in
-      TFConst (TFConst.create ~dtype:"DT_INT32" aname
-        [|Array.length axes|] atensor)
+      make_index_node axes aname
     ) in
     anode, aname
 
@@ -198,12 +196,7 @@ module Make
 
 
   let _make_stack_for_stridedslice name arr =
-    let tensor_content = Tfgraph_utils.serialise_tensor_content "int32"
-      (Owl_utils_array.to_string ~sep:"," string_of_int arr)
-    in
-    let shp = [| Array.length arr |] in
-    let stensor = ATTR_Tensor (make_tftensor ~tensor_content "DT_INT32" shp) in
-    TFConst (TFConst.create ~dtype:"DT_INT32" name shp stensor)
+    make_index_node arr name
 
 
   (* TODO: shrink for get operation *)
@@ -222,16 +215,8 @@ module Make
 
 
   let make_reshape_nodes name inputs shp =
-    let shp_str = Owl_utils_array.to_string ~sep:"," string_of_int shp in
-    let tensor_content = Tfgraph_utils.serialise_tensor_content
-      "int32" shp_str
-    in
-    let stensor = ATTR_Tensor (make_tftensor ~tensor_content
-      "DT_INT32" [|Array.length shp|])
-    in
     let sname = name ^ "/shape" in
-    let snode = TFConst (TFConst.create ~dtype:"DT_INT32" sname
-      [|Array.length shp|] stensor) in
+    let snode = make_index_node shp sname in
 
     let inputs = Array.append inputs [|sname|] in
     let rnode = TFReshape (TFReshape.create name inputs shp) in
@@ -296,11 +281,7 @@ module Make
 
   let make_transpose_nodes name inputs out_shp perm =
     let pname = name ^ "/perm" in
-    let perm_str = Owl_utils_array.to_string ~sep:"," string_of_int perm in
-    let tensor_content = Tfgraph_utils.serialise_tensor_content "int32" perm_str in
-    let pvalue = make_tftensor ~tensor_content "DT_INT32" [|Array.length perm|] in
-    let pnode = TFConst (TFConst.create ~dtype:"DT_INT32" pname [|Array.length perm|] (ATTR_Tensor pvalue)) in
-
+    let pnode = make_index_node perm pname in
     let tnode = TFTranspose (TFTranspose.create name [|inputs.(0); pname|] out_shp) in
     [|tnode; pnode|], ("", "")
 
@@ -333,6 +314,14 @@ module Make
     let cnode = TFConcat (TFConcat.create name cinpt out_shp) in
 
     [|cnode; anode|], ("", "")
+
+
+  let make_tile_nodes name inputs out_shp axes =
+    let aname = name ^ "/axis" in
+    let anode = make_index_node axes aname in
+    let tinpt = Array.append inputs [|aname|] in
+    let tnode = TFTile (TFTile.create name tinpt out_shp) in
+    [|tnode; anode|], ("", "")
 
 
   (* The logic of how one owl node turned into multiple tfnodes is implemented
@@ -477,6 +466,7 @@ module Make
       let axes = Owl_utils_array.range 0 (Array.length input_shape - 1) in
       make_min_nodes name inputs out_shp axes false
     | Concatenate axis    -> make_concat_nodes name inputs out_shp axis
+    | Tile axes           -> make_tile_nodes name inputs out_shp axes
     | OfArray shp         -> make_ofarray_2d_nodes name inputs out_shp shp
     (* Only support 1-dim array for now; may need to find a more proper tensorlfow operation *)
     | Var                 -> [| TFPlaceholder (TFPlaceholder.create name out_shp) |], ("", "")
