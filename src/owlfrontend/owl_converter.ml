@@ -17,7 +17,7 @@ module Make
 
   module TFgraph = Owl_converter_graph.Make (G)
 
-  open TFgraph (* for using the graphdef type *)
+  open TFgraph
 
   let make_tf_cgraph () =
     {
@@ -82,12 +82,10 @@ module Make
         variable_counter := !variable_counter + 1;
         TFsaver.add_link tfsaver tfgraph tfnode;
         (* TODO: serialise variables *)
-        (* TFcolls.update tfcolls "var" (Tfgraph_node.get_name tfnode);
-        TFcolls.update tfcolls "var_train" (Tfgraph_node.get_name tfnode) *)
       )
     ) tfgraph.nodes;
 
-    (* a tmp solution if no variable included in the graph *)
+    (* TODO: a tmp solution if no variable included in the graph *)
     if (!variable_counter = 0) then (
       let op = G.Optimiser.Operator.Symbol.Shape.Type.Ones [||] in
       let tfnodes, update = TFgraph.make_variable_nodes op "dummpy_var" [||] in
@@ -104,12 +102,6 @@ module Make
     tfmeta, tfgraph, tfsaver, tfcolls
 
 
-  (* Things not yet considered:
-   * - the "device" attr needs to be printed out for save/restore nodes
-   * - data type fixed to DT_FLOAT
-   * - some seemingly unimportant attr of nodes like "default_value" are emitted. Add when required.
-   * - all those random length of Hashtbl.
-   *)
   let convert graph =
     let tf_cgraph = make_tf_cgraph () in
     let tfmeta, tfgraph, tfsaver, tfcolls = parse_cgraph graph in

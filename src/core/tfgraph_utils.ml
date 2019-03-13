@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2019 Jianxin Zhao <jianxin.zhao@cl.cam.ac.uk>
  *)
 
+
 let htbl_to_arr htbl =
   Hashtbl.fold (fun k v acc ->
     Array.append acc [| (k,v) |]
@@ -28,7 +29,7 @@ let syscall cmd =
  * Ref: https://goo.gl/ipu2gZ, https://goo.gl/ZtyGNj
  *)
 let serialise_tensor_content dtype lst_str =
-  (* format of lst_str: 5,5,1,32; dtype: int32/float32/... *)
+  (* Format of lst_str: 5,5,1,32; dtype: int32/float32/... *)
   let cmd = Printf.sprintf "python -c 'import numpy as np; x = np.array([%s], dtype=np.%s); print(repr(x.tostring()))'" lst_str dtype in
   let str = syscall cmd in
   let len = String.length str in
@@ -60,7 +61,7 @@ let get_slice_param (idx : int list list) full_shp =
   b, e, s
 
 
-(* A very rudimentary template *)
+(* A rudimentary template *)
 let generate_py_templated prefix =
   let s = Printf.sprintf "#!/usr/bin/env python
 

@@ -21,7 +21,6 @@ type tftensor = {
   float_val      : float array option;
   int_val        : int array option;
   tensor_content : bytes option;
-  (* double_val, int_val, ... but only one of these fields should be used. *)
 }
 
 
@@ -41,11 +40,6 @@ type tfattrvalue =
 type tfop_attr = {
   name : string;
   typ  : string;
-  (* allowed_values : tfattrvalue
-   * default_value :  tfattrvalue
-   * has_minimum : bool;
-   * minimum : int
-   *)
 }
 
 
@@ -64,17 +58,13 @@ type tfop = {
   input_arg  : argdef array;
   output_arg : argdef array;
   attr       : tfop_attr array;
-  (* allows_uninitialized_input : bool
-   * is_commutative : bool
-   * is_stateful : bool
-   *)
 }
 
 
 type tfmeta = {
   mutable stripped_op_list   : tfop array;
   mutable tensorflow_version : string;
-  mutable op_names           : string array (* internal use *)
+  mutable op_names           : string array
 }
 
 

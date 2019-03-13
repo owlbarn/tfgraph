@@ -24,9 +24,6 @@ type graphdef = {
 }
 
 
-(* Graph version is NOT tensorflow version;
- * defined by TF_GRAPH_DEF_VERSION in core/public/version.h
- *)
 let create () =
   {
     nodes    = [||];

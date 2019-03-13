@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2019 Jianxin Zhao <jianxin.zhao@cl.cam.ac.uk>
  *)
 
+
 open Tfgraph_types
 open Tfgraph_node
 open Tfgraph_attr
@@ -19,9 +20,6 @@ module Make
   module Device = G.Optimiser.Operator.Symbol.Shape.Type.Device
 
 
-  (* Graph version is NOT tensorflow version;
-   * defined by TF_GRAPH_DEF_VERSION in core/public/version.h
-   *)
   let create () =
     {
       nodes    = [||];
@@ -36,7 +34,6 @@ module Make
     Hashtbl.add tfgraph.nametbl n_old n_new
 
 
-  (* a bad implementation; maybe change to Hashtbl later? *)
   let get_tfnode tfgraph name =
     let nodes = Array.to_list tfgraph.nodes in
     let ns = List.filter (fun n -> (get_name n) = name) nodes in
@@ -45,14 +42,14 @@ module Make
     | []     -> failwith (Printf.sprintf "cannot get node %s from graph" name)
 
 
-  (* "value" field only used by const node? Leave it here for now. Could be empty. *)
   let get_const_value (attr : Symbol.Shape.Type.attr) =
     if (Array.length attr.value > 0) then (
       let v = (attr.value).(0) in
       if (Device.is_arr v) then (
         let arr = Device.value_to_arr v in
         let shp = Device.A.shape arr in
-        let float_val = [|0.|] in (* should be G.A.to_array arr *)
+        (* TODO: should be G.A.to_array arr *)
+        let float_val = [|0.|] in
         let tensor = make_tftensor ~float_val "DT_FLOAT" shp in
         ATTR_Tensor tensor
       ) else if (Device.is_elt v) then (
@@ -140,9 +137,6 @@ module Make
     let assign = TFAssign (TFAssign.create ~refv:vname
       ~value:iname aname out_shp "DT_FLOAT")
     in
-    (* let init = get_tfnode "init" in
-    let init_inputs = get_inputs init in
-    set_inputs init (Array.append init_inputs [|aname|]); *)
     (Array.append [|var; read; assign|] initialisers),
     (name, aname)
 
@@ -199,7 +193,6 @@ module Make
     make_index_node arr name
 
 
-  (* TODO: shrink for get operation *)
   let make_stridedslice_nodes name inputs out_shp begins ends strides shrink =
     let name0 = name ^ "/stack_0" in
     let name1 = name ^ "/stack_1" in
@@ -210,7 +203,7 @@ module Make
 
     let inputs = Array.append inputs [|name0; name1; name2|] in
     let ss = TFStridedSlice (TFStridedSlice.create name inputs out_shp
-      0 0 0 0 shrink) in (* tmp: dummy numbers *)
+      0 0 0 0 shrink) in
     [|ss; stack0; stack1; stack2|], ("", "")
 
 
@@ -231,13 +224,10 @@ module Make
     | None   -> failwith "Owlnode output shape cannot be None"
 
 
-  (* Be aware of those operation that does not have same input and output shapes. Also, the l2norm here is NOT tf.math.l2_normalize. *)
   let make_l2norm_sqr_nodes name inputs inp_shp out_shp axes keepdims =
     let sqrname = name ^ "/square" in
     let sqrnode = TFSquare (TFSquare.create sqrname inputs inp_shp) in
-
     let sumnodes, _ = make_sum_nodes name [|sqrname|] out_shp axes keepdims in
-    (* TODO: this does not look like a good systen design -- I acutally need to know how make_sum_nodes works *)
     (Array.append sumnodes [|sqrnode|]), ("", "")
 
 
@@ -270,9 +260,6 @@ module Make
 
   let make_conv2dbackkernel_nodes name inputs out_shp padding strides =
     let sname = name ^ "/filter_sizes" in
-    (* NOTE: construct a const node like this is not the only way to represent
-     * the shape; a ShapeN node could also be used here.
-     *)
     let snode = make_index_node out_shp sname in
     let strides = [|1; strides.(0); strides.(1); 1|] in
     let inputs = Array.append inputs [|sname|] in
@@ -354,10 +341,6 @@ module Make
    * About the `attr.shape.(0)` and `(attr.value).(0)` below, currently only
    * `draw` operation in owl CGraph returns two outputs, so I'll stick with
    * this tmp solution for now.
-   *
-   * NOTE: Another thing is that, even if tfgraph is taken in as a parameter,
-   * that still doesn't ensure a node have global access -- in Sum's case, it
-   * needs access to its parents, which are not put into tfgraph yet.
    *)
   let make_tfnodes _tfgraph node =
     let name = Owl_graph.name node in
@@ -366,7 +349,7 @@ module Make
       Owl_graph.name n
     ) (Owl_graph.parents node)
     in
-     (* tmp: only uses the first output *)
+    (* TODO: only uses the first output currently *)
     let out_shp = attr.shape.(0) in
     let out_shp =
       match out_shp with
@@ -417,9 +400,9 @@ module Make
     | Sigmoid                 -> [| TFSigmoid (TFSigmoid.create name inputs out_shp)|], ("", "")
     | Scalar_Sigmoid          -> [| TFSigmoid (TFSigmoid.create name inputs out_shp)|], ("", "")
     | Dot (a, b, _, _)        -> [| TFMatMul (TFMatMul.create name inputs out_shp a b) |], ("", "")
-    | Add                     -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "") (* TODO: actually, it will be translated to TFBiasAdd in DNN example; need to investigate if any condition is included. *)
+    | Add                     -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "")
     | ScalarAdd               -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "")
-    | Scalar_Add              -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "") (* what's the difference? *)
+    | Scalar_Add              -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "")
     | AddScalar               -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "")
     | Sub                     -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
     | ScalarSub               -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
@@ -498,7 +481,6 @@ module Make
     | Concatenate axis        -> make_concat_nodes name inputs out_shp axis
     | Tile axes               -> make_tile_nodes name inputs out_shp axes
     | OfArray shp             -> make_ofarray_2d_nodes name inputs out_shp shp
-    (* Only support 1-dim array for now; may need to find a more proper tensorlfow operation *)
     | Var                     -> [| TFPlaceholder (TFPlaceholder.create name out_shp) |], ("", "")
     | Const                   ->
       let value = get_const_value attr in
@@ -513,14 +495,13 @@ module Make
       let s = Array.make len 1 in
       let shinrk_mask = (2. ** (float_of_int len) |> int_of_float) - 1 in
       make_stridedslice_nodes name inputs out_shp b e s shinrk_mask
-    | GetSlice i              -> (* be carefull when index contains less item than the full length *)
+    | GetSlice i              ->
       let input_shp = _get_input_shape node in
       let b, e, s = Tfgraph_utils.get_slice_param i input_shp in
       make_stridedslice_nodes name inputs out_shp b e s 0
     | _                       -> let err = Printf.sprintf "unsupported operation: %s" (Symbol.op_to_str attr.op) in failwith err
 
 
-  (* not a very good name... *)
   let expand_tfgraph tfgraph owlnode =
     let tfnodes, name_update = make_tfnodes tfgraph owlnode in
     add_tfnodes tfgraph tfnodes name_update

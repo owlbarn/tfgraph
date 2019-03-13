@@ -8,9 +8,6 @@
 open Tfgraph_types
 
 
-(* get version from tensorflow itself, probably by running command
- * `python -c 'import tensorflow as tf; print(tf.__version__)'`
- *)
 let create () =
   {
     stripped_op_list   = [||];
