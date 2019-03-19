@@ -1,10 +1,10 @@
-opam-version: "1.2"
+opam-version: "2"
 maintainer: "Roger Stark <rho.ajax@gmail.com>"
 authors: [ "Roger Stark" ]
 license: "MIT"
-homepage: "https://github.com/owlbarn/owl"
-dev-repo: "git+https://github.com/owlbarn/owl.git"
-bug-reports: "https://github.com/owlbarn/owl/issues"
+homepage: "https://github.com/owlbarn/tfgraph"
+dev-repo: "git+https://github.com/owlbarn/tfgraph.git"
+bug-reports: "https://github.com/owlbarn/tfgraph/issues"
 doc: "https://owlbarn.github.io/"
 
 build: [
