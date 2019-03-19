@@ -37,3 +37,16 @@ doc:
 push:
 	git commit -am "coding ..." && \
 	git push origin `git branch | grep \* | cut -d ' ' -f2`
+
+
+PKGS=owl-tensorflow
+.PHONY: release
+release:
+	make install # as package distrib steps rely on owl-base etc
+	opam install --yes dune-release
+	dune-release tag
+	dune-release distrib
+	dune-release publish
+
+	dune-release opam pkg -p owl-tensorflow
+	dune-release opam submit -p $(PKGS)

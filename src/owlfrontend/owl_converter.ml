@@ -11,6 +11,12 @@ module TFcolls = Tfgraph_collection
 module TFmeta  = Tfgraph_meta
 module TFsaver = Tfgraph_saver
 
+
+(**
+  This functor takes a Owl computation graph as its input, then it generates
+  the owl-tensorflow converter module without flattening the module hierarchy.
+ *)
+
 module Make
   (G : Owl_computation_graph_sig.Sig)
   = struct

@@ -7,5 +7,4 @@ include Tfgraph_types
 
 (** Make alias of the modules in Owl for your convenience. *)
 
-(* without this line the Owl_converter cannot not be used... leave it here for now *)
 module Owl_converter = Owl_converter

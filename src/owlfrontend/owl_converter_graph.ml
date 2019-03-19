@@ -9,6 +9,12 @@ open Tfgraph_types
 open Tfgraph_node
 open Tfgraph_attr
 
+
+(**
+  This functor takes a Owl computation graph as its input, then it generates
+  the tensorflow graph module without flattening the module hierarchy.
+ *)
+
 module Make
   (G : Owl_computation_graph_sig.Sig)
   = struct
