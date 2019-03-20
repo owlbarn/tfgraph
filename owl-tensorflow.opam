@@ -5,7 +5,7 @@ license: "MIT"
 homepage: "https://github.com/owlbarn/tfgraph"
 dev-repo: "git+https://github.com/owlbarn/tfgraph.git"
 bug-reports: "https://github.com/owlbarn/tfgraph/issues"
-doc: "https://owlbarn.github.io/"
+doc: "https://owlbarn.github.io/tfgraph/"
 
 build: [
   [ "dune" "subst" ] {pinned}
@@ -18,4 +18,3 @@ depends: [
 ]
 
 available: [ ocaml-version >= "4.06.0" ]
-
