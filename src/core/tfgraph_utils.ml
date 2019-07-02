@@ -33,8 +33,8 @@ let serialise_tensor_content dtype lst_str =
   let cmd = Printf.sprintf "python -c 'import numpy as np; x = np.array([%s], dtype=np.%s); print(repr(x.tostring()))'" lst_str dtype in
   let str = syscall cmd in
   let len = String.length str in
-  assert (len > 3);
-  String.sub str 1 (len - 3) |> Bytes.of_string
+  assert (len > 4);
+  String.sub str 2 (len - 4) |> Bytes.of_string
 
 
 let get_slice_param (idx : int list list) full_shp =
