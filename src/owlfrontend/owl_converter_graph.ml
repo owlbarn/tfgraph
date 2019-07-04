@@ -143,8 +143,8 @@ module Make
       ~value:iname aname out_shp "DT_FLOAT")
     in
 
-    (*linked order: var, initialiser, assign, read *)
-    let var = TFVariable (TFVariable.create ~linked_nodes:(vname, iname, aname, rname) vname out_shp "DT_FLOAT") in
+    (* Note linked order *)
+    let var = TFVariable (TFVariable.create ~linked_nodes:(vname, aname, rname, iname) vname out_shp "DT_FLOAT") in
 
     (Array.append [|var; read; assign|] initialisers),
     (name, aname)
