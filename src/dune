@@ -1,9 +1,10 @@
 (copy_files# core/*)
+(copy_files# generated/*)
 (copy_files# owlfrontend/*)
 
 (library
   (name owl_tensorflow)
   (public_name owl-tensorflow)
   (modes byte)
-  (libraries owl-base)
+  (libraries owl-base ocaml-protoc)
 )

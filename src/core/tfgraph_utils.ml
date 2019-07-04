@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2019 Jianxin Zhao <jianxin.zhao@cl.cam.ac.uk>
  *)
 
+open Variable_types
 
 let htbl_to_arr htbl =
   Hashtbl.fold (fun k v acc ->
@@ -35,6 +36,23 @@ let serialise_tensor_content dtype lst_str =
   let len = String.length str in
   assert (len > 4);
   String.sub str 2 (len - 4) |> Bytes.of_string
+
+
+let serialise_variable ?(trainable=true) n_variable n_initial_value n_initializer n_snapshot =
+  let variable = {
+       variable_name = n_variable;
+       initial_value_name = n_initial_value;
+       initializer_name = n_initializer;
+       snapshot_name = n_snapshot;
+       save_slice_info_def = None;
+       is_resource = false;
+       trainable = trainable;
+       synchronization = Variable_synchronization_none;
+       aggregation = Variable_aggregation_none;
+   } in
+   let encoder = Pbrt.Encoder.create () in
+   Variable_pb.encode_variable_def variable encoder;
+   Pbrt.Encoder.to_bytes encoder
 
 
 let get_slice_param (idx : int list list) full_shp =
