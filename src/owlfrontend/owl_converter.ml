@@ -74,7 +74,7 @@ module Make
 
     let tfcolls = TFcolls.create () in
     TFcolls.add_byteslist tfcolls "var";
-    TFcolls.add_byteslist tfcolls "var_train";
+    TFcolls.add_byteslist tfcolls "trainable_variables";
     TFcolls.add_nodelist  tfcolls "result";
 
     let variable_counter = ref 0 in
@@ -87,7 +87,11 @@ module Make
       if (TFmeta.is_var tfnode) then (
         variable_counter := !variable_counter + 1;
         TFsaver.add_link tfsaver tfgraph tfnode;
-        (* TODO: serialise variables *)
+
+        (* serialise variables *)
+        let bytes = Tfgraph_node.get_linked_nodes tfnode |> Tfgraph_utils.serialise_variable in
+        TFcolls.update_bytelist tfcolls "trainable_variables" bytes
+        
       )
     ) tfgraph.nodes;
 

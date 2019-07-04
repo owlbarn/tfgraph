@@ -132,7 +132,6 @@ module Make
     let iname = (get_name initialisers.(0)) in
 
     let vname = Printf.sprintf "%s/variable" name in
-    let var = TFVariable (TFVariable.create vname out_shp "DT_FLOAT") in
 
     let rname = name ^ "/read" in
     let read = TFIdentity (TFIdentity.create ~cls:[|vname|] rname [|vname|]
@@ -143,6 +142,10 @@ module Make
     let assign = TFAssign (TFAssign.create ~refv:vname
       ~value:iname aname out_shp "DT_FLOAT")
     in
+
+    (*linked order: var, initialiser, assign, read *)
+    let var = TFVariable (TFVariable.create ~linked_nodes:(vname, iname, aname, rname) vname out_shp "DT_FLOAT") in
+
     (Array.append [|var; read; assign|] initialisers),
     (name, aname)
 

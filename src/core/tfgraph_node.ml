@@ -3430,15 +3430,16 @@ end
 module TFVariable = struct
 
   type t = {
-    mutable name           : string;
-    mutable op_name        : string;
-    mutable dtype          : string;
-    mutable shape          : int array;
-    mutable out_shp        : int array;
-    mutable shared_name    : string;
-    mutable container      : string; (* should be of type ATTR_kv *)
-    mutable device         : string;
-    mutable cls            : string array;
+    mutable name        : string;
+    mutable op_name     : string;
+    mutable dtype       : string;
+    mutable shape       : int array;
+    mutable out_shp     : int array;
+    mutable shared_name : string;
+    mutable container   : string; (* should be of type ATTR_kv *)
+    mutable device      : string;
+    mutable cls         : string array;
+    mutable linked      : string * string * string * string
   }
 
 
@@ -3461,7 +3462,7 @@ module TFVariable = struct
     make_opdef ~output_arg ~attr opname
 
 
-  let create ?(cls=[||]) ?(device="") name out_shp dtype =
+  let create ?(cls=[||]) ?(device="") ?(linked_nodes=("", "", "", "")) name out_shp dtype =
     {
       name        = name;
       op_name     = opname;
@@ -3472,6 +3473,7 @@ module TFVariable = struct
       shared_name = ""; (* tmp *)
       device      = device;
       cls         = cls;
+      linked      = linked_nodes;
     }
 
 
@@ -3495,6 +3497,8 @@ module TFVariable = struct
       device    = n.device
     }
 
+
+  let get_linked_nodes n = n.linked
 
   let to_pbtxt n =
     make_nodedef n |> nodedef_to_pbtxt
@@ -5439,3 +5443,8 @@ let set_dtypes = function
   | TFSave    n -> TFSave.set_dtypes n
   | TFRestore n -> TFRestore.set_dtypes n
   | _           -> failwith "unsupported operation: set_dtypes"
+
+
+let get_linked_nodes = function
+  | TFVariable n -> TFVariable.get_linked_nodes n
+  | _            -> failwith "unsupported operation: get_linked_nodes"

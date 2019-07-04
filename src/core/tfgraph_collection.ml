@@ -9,13 +9,26 @@ open Tfgraph_types
 open Tfgraph_utils
 
 
-let create () = Hashtbl.create 10
+let create () = Hashtbl.create 100
 
 
 let add_byteslist coll name = Hashtbl.add coll name (Byteslist [||])
 
 
-let update_bytelist = ()
+let update_bytelist coll name bytes =
+  (* perhaps better impl. *)
+  let lst =
+    try
+      Hashtbl.find coll name
+    with
+    | Not_found ->
+      add_byteslist coll name; Byteslist [||]
+  in
+  let lst = match lst with
+  | Byteslist l -> Array.append l [|bytes|]
+  | _           -> failwith "incorrect type in update_bytelist"
+  in
+  Hashtbl.replace coll name (Byteslist lst)
 
 
 let add_floatlist coll name = Hashtbl.add coll name (Floatlist [||])

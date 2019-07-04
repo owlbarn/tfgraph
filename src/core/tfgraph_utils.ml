@@ -38,7 +38,8 @@ let serialise_tensor_content dtype lst_str =
   String.sub str 2 (len - 4) |> Bytes.of_string
 
 
-let serialise_variable ?(trainable=true) n_variable n_initial_value n_initializer n_snapshot =
+let serialise_variable ?(trainable=true) linked_var_names =
+  let (n_variable, n_initial_value, n_initializer, n_snapshot) = linked_var_names in
   let variable = {
        variable_name = n_variable;
        initial_value_name = n_initial_value;
