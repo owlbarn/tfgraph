@@ -8,3 +8,4 @@ include Tfgraph_types
 (** Make alias of the modules in Owl for your convenience. *)
 
 module Owl_converter = Owl_converter
+module Tfgraph_utils = Tfgraph_utils

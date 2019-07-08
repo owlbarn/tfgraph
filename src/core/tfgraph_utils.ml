@@ -4,7 +4,7 @@
  * Copyright (c) 2019-2019 Jianxin Zhao <jianxin.zhao@cl.cam.ac.uk>
  *)
 
-open Variable_types
+(* open Variable_types *)
 
 let htbl_to_arr htbl =
   Hashtbl.fold (fun k v acc ->
@@ -37,7 +37,7 @@ let serialise_tensor_content dtype lst_str =
   assert (len > 4);
   String.sub str 2 (len - 4) |> Bytes.of_string
 
-
+(*
 let serialise_variable ?(trainable=true) linked_var_names =
   let (n_variable, n_initial_value, n_initializer, n_snapshot) = linked_var_names in
   let variable = {
@@ -54,6 +54,14 @@ let serialise_variable ?(trainable=true) linked_var_names =
    let encoder = Pbrt.Encoder.create () in
    Variable_pb.encode_variable_def variable encoder;
    Pbrt.Encoder.to_bytes encoder
+*)
+
+let serialise_variable linked_var_names =
+  let (n_variable, n_initial_value, n_initializer, n_snapshot) = linked_var_names in
+  let cmd  = Printf.sprintf "serialise.py %s %s %s %s" n_variable n_initial_value n_initializer n_snapshot in
+  let result = syscall cmd |> Scanf.unescaped in
+  let l = String.length result in
+  String.sub result 2 (l - 3) |> Bytes.of_string
 
 
 let get_slice_param (idx : int list list) full_shp =

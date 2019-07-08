@@ -1,0 +1,7 @@
+(install
+ (section bin)
+ (package owl-tensorflow)
+ (files (variable_pb2.py as variable_pb2.py)
+        (serialise.py as serialise.py)
+        )
+ )
