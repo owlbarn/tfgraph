@@ -144,7 +144,7 @@ module Make
     in
 
     (* Note linked order *)
-    let var = TFVariable (TFVariable.create ~linked_nodes:(vname, iname, aname, rname) vname out_shp "DT_FLOAT") in
+    let var = TFVariable (TFVariable.create ~linked_nodes:(vname ^ ":0", iname ^ ":0", aname, rname ^ ":0") vname out_shp "DT_FLOAT") in
 
     (Array.append [|var; read; assign|] initialisers),
     (name, aname)

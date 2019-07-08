@@ -61,7 +61,7 @@ let serialise_variable linked_var_names =
   let cmd  = Printf.sprintf "serialise.py %s %s %s %s" n_variable n_initial_value n_initializer n_snapshot in
   let result = syscall cmd |> Scanf.unescaped in
   let l = String.length result in
-  String.sub result 2 (l - 3) |> Bytes.of_string
+  String.sub result 2 (l - 4) |> Bytes.of_string
 
 
 let get_slice_param (idx : int list list) full_shp =
