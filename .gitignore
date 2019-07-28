@@ -25,3 +25,5 @@ setup.log
 *.install
 dune-project
 .DS_Store
+
+__pycache__
