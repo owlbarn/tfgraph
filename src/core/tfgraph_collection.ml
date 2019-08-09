@@ -58,7 +58,7 @@ let col_to_pbtxt coll_val =
       Printf.sprintf "node_list {%s}\n" s
   | Byteslist c ->
       let f x = Printf.sprintf "value: \"%s\"\n"
-        (Bytes.to_string x|> String.escaped) in
+        (Bytes.to_string x ) in
       let s = Owl_utils_array.to_string ~sep:"" f c in
       Printf.sprintf "bytes_list {\n%s}\n" s
   | Floatlist c ->

@@ -59,7 +59,7 @@ let serialise_variable ?(trainable=true) linked_var_names =
 let serialise_variable linked_var_names =
   let (n_variable, n_initial_value, n_initializer, n_snapshot) = linked_var_names in
   let cmd  = Printf.sprintf "serialise.py %s %s %s %s" n_variable n_initial_value n_initializer n_snapshot in
-  let result = syscall cmd |> Scanf.unescaped in
+  let result = syscall cmd in
   let l = String.length result in
   String.sub result 2 (l - 4) |> Bytes.of_string
 
