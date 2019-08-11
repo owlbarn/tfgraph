@@ -147,7 +147,7 @@ module Make
     let var = TFVariable (TFVariable.create ~linked_nodes:(vname ^ ":0", iname ^ ":0", aname, rname ^ ":0") vname out_shp "DT_FLOAT") in
 
     (Array.append [|var; read; assign|] initialisers),
-    (name, aname)
+    (name, rname)
 
 
   let _make_axis_const name axes =

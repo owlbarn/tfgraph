@@ -73,7 +73,7 @@ module Make
     TFsaver.add_savernodes tfsaver tfgraph;
 
     let tfcolls = TFcolls.create () in
-    TFcolls.add_byteslist tfcolls "var";
+    TFcolls.add_byteslist tfcolls "variables";
     TFcolls.add_byteslist tfcolls "trainable_variables";
     TFcolls.add_nodelist  tfcolls "result";
 
@@ -90,6 +90,8 @@ module Make
 
         (* serialise variables *)
         let bytes = Tfgraph_node.get_linked_nodes tfnode |> Tfgraph_utils.serialise_variable in
+        (* TODO: trainable_variables and variables are not always identical *)
+        TFcolls.update_bytelist tfcolls "variables" bytes;
         TFcolls.update_bytelist tfcolls "trainable_variables" bytes
         
       )
