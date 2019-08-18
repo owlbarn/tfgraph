@@ -152,8 +152,9 @@ let add_link tfsaver tfgraph tfnode =
     |> Array.length in
   (* let name = Printf.sprintf "%s/Assign_%d" nname id in *)
   let name = Printf.sprintf "save/Assign_%d" id in
+  let vname = Printf.sprintf "%s:%d" _restore_name id in
   let assign_node = TFAssign (TFAssign.create ~refv:nname
-    ~value:_restore_name name out_shp "DT_FLOAT")
+    ~value:vname name out_shp "DT_FLOAT")
   in
 
   _add_input tfgraph _save_name [|nname|];
