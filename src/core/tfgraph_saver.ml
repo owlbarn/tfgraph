@@ -150,7 +150,8 @@ let add_link tfsaver tfgraph tfnode =
 
   let id = _get_const_string_value tfgraph _save_tensor_names
     |> Array.length in
-  let name = Printf.sprintf "%s/Assign_%d" nname id in
+  (* let name = Printf.sprintf "%s/Assign_%d" nname id in *)
+  let name = Printf.sprintf "save/Assign_%d" id in
   let assign_node = TFAssign (TFAssign.create ~refv:nname
     ~value:_restore_name name out_shp "DT_FLOAT")
   in
@@ -171,8 +172,8 @@ let add_link tfsaver tfgraph tfnode =
 
 let to_pbtxt saver =
   let saver_str =
-    (Printf.sprintf "filename_tensor_name : \"%s\"\n" saver.filename_tensor_name) ^
-    (Printf.sprintf "save_tensor_name : \"%s\"\n" saver.save_tensor_name) ^
+    (Printf.sprintf "filename_tensor_name : \"%s:0\"\n" saver.filename_tensor_name) ^
+    (Printf.sprintf "save_tensor_name : \"%s:0\"\n" saver.save_tensor_name) ^
     (Printf.sprintf "restore_op_name : \"%s\"\n" saver.restore_op_name) ^
     (Printf.sprintf "max_to_keep : %d\n" saver.max_to_keep) ^
     (Printf.sprintf "sharded: %b\n" saver.sharded) ^
