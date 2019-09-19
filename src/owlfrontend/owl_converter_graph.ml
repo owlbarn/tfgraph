@@ -415,6 +415,7 @@ module Make
     | AddScalar               -> [| TFAdd (TFAdd.create name inputs out_shp) |], ("", "")
     | Sub                     -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
     | ScalarSub               -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
+    | Scalar_Sub              -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
     | SubScalar               -> [| TFSub (TFSub.create name inputs out_shp) |], ("", "")
     | Mul                     -> [| TFMul (TFMul.create name inputs out_shp) |], ("", "")
     | MulScalar               -> [| TFMul (TFMul.create name inputs out_shp) |], ("", "")
