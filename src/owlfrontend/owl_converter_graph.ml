@@ -456,19 +456,19 @@ module Make
       let s = [|1; s.(0); s.(1); 1|] in
       let d = [|1; d.(0); d.(1); 1|] in
       [| TFConv2D (TFConv2D.create ~dilations:d name inputs out_shp p s) |], ("", "")
-    | MaxPool1d (p, s, k)     ->
+    | MaxPool1d (p, k, s)     ->
       let s = [|1; s.(0); 1|] in
       let k = [|1; k.(0); 1|] in
       [| TFMaxPool (TFMaxPool.create name inputs out_shp p s k) |], ("", "")
-    | AvgPool1d (p, s, k)     ->
+    | AvgPool1d (p, k, s)     ->
       let s = [|1; s.(0); 1|] in
       let k = [|1; k.(0); 1|] in
       [| TFAvgPool (TFAvgPool.create name inputs out_shp p s k) |], ("", "")
-    | MaxPool2d (p, s, k)     ->
+    | MaxPool2d (p, k, s)     ->
       let s = [|1; s.(0); s.(1); 1|] in
       let k = [|1; k.(0); k.(1); 1|] in
       [| TFMaxPool (TFMaxPool.create name inputs out_shp p s k) |], ("", "")
-    | AvgPool2d (p, s, k)     ->
+    | AvgPool2d (p, k, s)     ->
       let s = [|1; s.(0); s.(1); 1|] in
       let k = [|1; k.(0); k.(1); 1|] in
       [| TFAvgPool (TFAvgPool.create name inputs out_shp p s k) |], ("", "")
